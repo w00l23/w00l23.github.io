@@ -193,9 +193,9 @@
     transform: translateY(0);
   }
   .phone:nth-child(2) { margin-bottom: 18px; }
-  /* the middle phone mirrors Iluminara's front page: its screen scrolls as the visitor does */
-  .phone.mirror { display: block; aspect-ratio: 390 / 844; }
-  .phone.mirror img { will-change: transform; }
+  /* the middle phone holds Iluminara's whole front page: scroll inside it to read on */
+  .phone.mirror { display: block; aspect-ratio: 390 / 844; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .phone.mirror::-webkit-scrollbar { display: none; }
   .phone.mirror:hover { box-shadow: 0 30px 60px rgba(0,0,0,.55), 0 0 0 4px rgba(10,12,24,.9), 0 0 48px rgba(139,124,255,.32); }
   .phone img { width: 100%; height: auto; display: block; }
 
@@ -226,7 +226,6 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .card, .btn, .card .thumb img, .card h3 .arrow, .thread .tstar { transition: none; }
-    .phone.mirror img { transform: none !important; }
   }
 </style>
 </head>
@@ -318,7 +317,7 @@
         </div>
         <div class="phones" aria-label="Screenshots of Iluminara">
           <div class="phone"><img src="assets/iluminara-worlds.webp" alt="Iluminara Worlds screen: twenty-five worlds to move into, drawn as glowing spheres on slow orbits" width="780" height="1688"></div>
-          <a class="phone mirror" href="https://www.iluminara-messenger.com" target="_blank" rel="noopener" aria-label="Iluminara's front page, which scrolls as you do. Opens iluminara-messenger.com"><img src="assets/iluminara-landing.webp" alt="" width="480" height="4629" loading="lazy" decoding="async"></a>
+          <a class="phone mirror" href="https://www.iluminara-messenger.com" target="_blank" rel="noopener" aria-label="Iluminara's front page; scroll inside the phone to see all of it. Opens iluminara-messenger.com"><img src="assets/iluminara-landing.webp" alt="" width="480" height="4629" loading="lazy" decoding="async"></a>
           <div class="phone"><img src="assets/iluminara-lumina.webp" alt="Lumina screen: tap a feeling, with prompts like Anchor me and Quiet my mind" width="780" height="1688"></div>
         </div>
       </div>
@@ -484,27 +483,6 @@
   if (window.ResizeObserver) new ResizeObserver(function () { layout(); }).observe(main);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
   layout();
-})();
-(function () {
-  // The scroll mirror: as the Iluminara section passes through the window, the
-  // front page inside the middle phone scrolls from top to bottom in step.
-  // A transform only, and only while the section is near the screen.
-  var m = document.querySelector('.phone.mirror'); if (!m) return;
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var img = m.querySelector('img'), sec = m.closest('.ilu') || m, ticking = false, near = false;
-  function update() {
-    var r = sec.getBoundingClientRect(), vh = innerHeight;
-    var p = (vh - r.top) / (vh + r.height); p = p < 0 ? 0 : p > 1 ? 1 : p;
-    var travel = img.offsetHeight - m.clientHeight;
-    img.style.transform = 'translate3d(0,' + (-p * travel).toFixed(1) + 'px,0)';
-  }
-  function onScroll() { if (!near || ticking) return; ticking = true; requestAnimationFrame(function () { ticking = false; update(); }); }
-  addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', update, { passive: true });
-  img.addEventListener('load', update);
-  if (window.IntersectionObserver) new IntersectionObserver(function (es) { near = es[0].isIntersecting; if (near) update(); }, { rootMargin: '25%' }).observe(sec);
-  else near = true;
-  update();
 })();
 </script>
 <script>
