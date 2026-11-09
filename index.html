@@ -568,7 +568,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
   }
 
   // --- the canvas, the horizon and the city on it
-  var W = 0, H = 0, dpr = 1, yh = 0, sv = 1, sh = 1, az0 = 180, aimed = false;
+  var W = 0, H = 0, dpr = 1, yh = 0, sv = 1, sh = 1, az0 = 180, aimed = false, yText = 0, textBox = null;
   var picked = null, mw = null;
   function rng(seed) { var s = seed >>> 0; return function () { s = (s + 0x6D2B79F5) >>> 0; var t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
   // galactic (l, b) -> RA, Dec (J2000)
@@ -617,6 +617,13 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     yh = H - 6;
+    // the block of words: the sky is space above it by day, and no label lands on it
+    var inner = cv.parentNode.querySelector('.hero-inner'), lede = cv.parentNode.querySelector('.lede');
+    if (inner && lede) {
+      var rc = cv.getBoundingClientRect(), ri = inner.getBoundingClientRect(), rl = lede.getBoundingClientRect();
+      yText = Math.max(60, ri.top - rc.top);
+      textBox = [rl.left - rc.left - 8, ri.top - rc.top - 8, Math.max(rl.right, rl.left + 200) - rc.left + 8, ri.bottom - rc.top];
+    } else { yText = H * 0.4; textBox = null; }
     sv = (yh - 48) / 72;                 // pixels a degree, up: the top of the sky is 72 degrees over the horizon
     var fov = W / sv; if (fov < 80) fov = 80; if (fov > 160) fov = 160;
     sh = W / fov;                         // pixels a degree, across
@@ -654,9 +661,12 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
     // the sky: night, or the day's blue with the stars still in it
     // night to day over civil twilight: the sky goes blue and the stars go out
     var day = Math.max(0, Math.min(1, (sunAlt + 10) / 14)); day = day * day * (3 - 2 * day);
-    var top = [5 + 29 * day, 6 + 76 * day, 15 + 155 * day], bot = [15 + 137 * day, 20 + 172 * day, 40 + 192 * day];
-    var gr = ctx.createLinearGradient(0, 0, 0, yh);
-    gr.addColorStop(0, 'rgb(' + top.map(Math.round).join(',') + ')'); gr.addColorStop(1, 'rgb(' + bot.map(Math.round).join(',') + ')');
+    var gr = ctx.createLinearGradient(0, 0, 0, yh), yt = Math.min(yText, yh - 40);
+    function mix(a, b) { return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * day) + ',' + Math.round(a[1] + (b[1] - a[1]) * day) + ',' + Math.round(a[2] + (b[2] - a[2]) * day) + ')'; }
+    gr.addColorStop(0, mix([5, 6, 15], [4, 7, 20]));                       // the depth of space, day or night
+    gr.addColorStop(yt * 0.5 / yh, mix([7, 9, 21], [22, 52, 120]));
+    gr.addColorStop(yt / yh, mix([10, 13, 28], [84, 130, 200]));           // blue by the time the words begin
+    gr.addColorStop(1, mix([15, 20, 40], [152, 192, 232]));
     ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
     // the city's own light low on the horizon at night; the Sun's warmth there at dusk and dawn
     var dusk = Math.max(0, 1 - Math.abs(sunAlt + 2) / 9);
@@ -668,17 +678,20 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
     drawn.length = 0;
     if (starDim > 0.03) blitMilkyWay(starDim);
     // the stars
+    var yt2 = Math.min(yText, yh - 40);
     for (i = 0; i < N; i++) {
-      if (starDim < 0.03) break;
       if (salt[i] < -0.5) continue;
       x = xOf(saz[i]); if (x < -4 || x > W + 4) continue;
       y = yOf(salt[i]); if (y < -4) continue;
-      var m = smag[i], r = Math.max(0.45, 2.9 - 0.46 * m), a = Math.max(0.3, Math.min(1, 1.22 - 0.16 * m)) * starDim;
+      // by day a star shows only where the sky is still dark, high above the words
+      var dim = starDim;
+      if (day > 0.02) { var up = Math.max(0, Math.min(1, (yt2 - y) / (yt2 * 0.85))); dim = starDim + day * up * up * 0.9; if (dim < 0.04) continue; }
+      var m = smag[i], r = Math.max(0.45, 2.9 - 0.46 * m), a = Math.max(0.3, Math.min(1, 1.22 - 0.16 * m)) * dim;
       if (!reduce && m < 4.2) a *= 0.85 + 0.15 * Math.sin(s * (1.4 + (i % 7) * 0.3) + sph[i]);
       ctx.fillStyle = 'rgba(' + COL[scol[i]] + ',' + a.toFixed(2) + ')';
       if (r < 0.9) ctx.fillRect(x - r, y - r, r * 2, r * 2);
       else {
-        if (m < 1.2) { ctx.globalAlpha = 0.14 * starDim; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+        if (m < 1.2) { ctx.globalAlpha = 0.14 * dim; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
         ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
       }
       if (m < 4.6) drawn.push([x, y, nameOf[i] || ('a star, magnitude ' + m.toFixed(1)), nameOf[i] ? 'named' : 'star', m, 0, COL[scol[i]]]);
@@ -730,6 +743,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
     ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif'; ctx.textBaseline = 'middle';
     var put = [];
     function label(x, y, text, col) {
+      if (textBox && x + 9 > textBox[0] && x < textBox[2] && y > textBox[1] && y < textBox[3]) return;
       for (var j = 0; j < put.length; j++) if (Math.abs(put[j][0] - x) < 70 && Math.abs(put[j][1] - y) < 16) return;
       put.push([x, y]);
       ctx.fillStyle = col; ctx.fillText(text, x + 9, y + 1);
