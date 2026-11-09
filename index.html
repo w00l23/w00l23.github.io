@@ -49,6 +49,9 @@
     width: 100%; display: block; pointer-events: none; will-change: transform;
   }
   main { position: relative; z-index: 1; }
+  /* the path of light: a star by each heading, one thread drawn by scrolling */
+  .thread { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
+  .thread .tstar { opacity: .3; transition: opacity .7s ease; }
   .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
 
   /* header */
@@ -202,7 +205,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .card, .btn, .card .thumb img, .card h3 .arrow { transition: none; }
+    .card, .btn, .card .thumb img, .card h3 .arrow, .thread .tstar { transition: none; }
   }
 </style>
 </head>
@@ -210,6 +213,7 @@
 <canvas id="sky" aria-hidden="true"></canvas>
 
 <main>
+  <svg class="thread" aria-hidden="true"></svg>
   <header class="top">
     <div class="wrap">
       <a class="brand" href="#top"><span class="dot"></span>Mina Systems</a>
@@ -425,6 +429,77 @@
   addEventListener('resize', resize, { passive: true });
   addEventListener('scroll', onScroll, { passive: true });
   resize();
+})();
+(function () {
+  // The path of light: a star beside each heading, and one thread drawn by scrolling
+  // from the hero down into the Iluminara link. It keeps to the margin, so it never
+  // crosses a word. Nothing runs between scrolls.
+  var svg = document.querySelector('.thread'); if (!svg || !svg.getBBox) return;
+  var NS = 'http://www.w3.org/2000/svg', main = svg.parentNode;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var STOPS = [['.hero .eyebrow', 'text'], ['#demos h2', 'text'], ['.ilu h2', 'panel'], ['.ilu .btn.primary', 'end']];
+  function el(n, a, p) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; }
+  var defs = el('defs'), g = el('radialGradient', { id: 'tg' }, defs);
+  el('stop', { offset: '0', 'stop-color': '#fff', 'stop-opacity': '.95' }, g);
+  el('stop', { offset: '.3', 'stop-color': '#c9d2ff', 'stop-opacity': '.5' }, g);
+  el('stop', { offset: '1', 'stop-color': '#c9d2ff', 'stop-opacity': '0' }, g);
+  var bed = el('path', { fill: 'none', stroke: 'rgba(200,210,255,.18)', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  var line = el('path', { fill: 'none', stroke: 'rgba(218,224,255,.78)', 'stroke-width': '1', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  var pts = [], stars = [], total = 0, cum = [], mainTop = 0, H = 0;
+  function star(big) {
+    var s = el('g', { 'class': 'tstar' });
+    el('circle', { r: big ? 12 : 7, fill: 'url(#tg)' }, s); el('circle', { r: big ? 1.9 : 1.2, fill: '#fff' }, s);
+    return s;
+  }
+  function layout() {
+    var mr = main.getBoundingClientRect(), ox = -mr.left, oy = -mr.top;
+    mainTop = mr.top + (scrollY || 0); H = innerHeight; pts = [];
+    STOPS.forEach(function (st, i) {
+      var e = document.querySelector(st[0]); if (!e) return;
+      var r = e.getBoundingClientRect(), fr = e.getClientRects()[0] || r, x;
+      var y = (fr.top + fr.bottom) / 2 + oy;
+      if (st[1] === 'panel') x = e.closest('.ilu').getBoundingClientRect().left - 14 + ox;
+      else if (st[1] === 'end') x = r.left - 12 + ox;
+      else x = r.left - 14 + ox;
+      x = Math.max(7, x);
+      if (i > 0 && i < 3) {
+        var p = pts[pts.length - 1], off = Math.min(48, Math.max(0, Math.min(p.x, x) - 10));
+        pts.push({ x: Math.min(p.x, x) - off, y: (p.y + y) / 2 + (i % 2 ? -28 : 22), big: false });
+      }
+      pts.push({ x: x, y: y, big: st[1] !== 'end' });
+    });
+    if (pts.length < 2) return;
+    var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
+    bed.setAttribute('d', d); line.setAttribute('d', d);
+    total = line.getTotalLength(); cum = [0];
+    for (var i = 1; i < pts.length; i++) cum[i] = cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+    while (stars.length < pts.length) stars.push(star(false));
+    pts.forEach(function (p, i) { var s = stars[i]; s.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')'); s.firstChild.setAttribute('r', p.big ? 12 : 7); s.lastChild.setAttribute('r', p.big ? 1.9 : 1.2); });
+    if (reduce) { line.setAttribute('stroke', 'rgba(218,224,255,.4)'); stars.forEach(function (s) { s.style.opacity = '.8'; }); return; }
+    bed.setAttribute('stroke-dasharray', total); line.setAttribute('stroke-dasharray', total);
+    update();
+  }
+  var ticking = false;
+  function update() {
+    if (reduce || !total) return;
+    var ty = (scrollY || 0) + H * 0.62 - mainTop, len = 0;
+    for (var i = 1; i < pts.length; i++) {
+      var a = pts[i - 1], b = pts[i], seg = cum[i] - cum[i - 1];
+      if (ty >= b.y) { len = cum[i]; continue; }
+      if (ty > a.y && b.y > a.y) len = cum[i - 1] + seg * (ty - a.y) / (b.y - a.y);
+      break;
+    }
+    var off = total - len;
+    bed.setAttribute('stroke-dashoffset', off); line.setAttribute('stroke-dashoffset', off);
+    stars.forEach(function (s, i) { s.style.opacity = len >= cum[i] - 1 ? '1' : '.3'; });
+  }
+  function onScroll() { if (ticking) return; ticking = true; requestAnimationFrame(function () { ticking = false; update(); }); }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', layout, { passive: true });
+  addEventListener('load', layout);
+  if (window.ResizeObserver) new ResizeObserver(function () { layout(); }).observe(main);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  layout();
 })();
 </script>
 </body>
