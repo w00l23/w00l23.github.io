@@ -351,28 +351,55 @@
   function draw(g, w, h) {
     var r = rng(37), wide = w > 760;
     var cx = w * (wide ? 0.7 : 0.58), cy = h * (wide ? 0.3 : 0.2), R = Math.min(w, h) * (wide ? 0.44 : 0.5);
+    var TILT = 0.4, ANG = -0.55, cosA = Math.cos(ANG), sinA = Math.sin(ANG);
     var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#03040b'); gr.addColorStop(1, '#080b1a');
     g.fillStyle = gr; g.fillRect(0, 0, w, h);
     stars(g, r, Math.round(w * h / 2600), w, h, 0, 0.5);
-    g.save(); g.translate(cx, cy); g.rotate(-0.55); g.scale(1, 0.4);
-    blob(g, 0, 0, R * 1.05, R * 1.05, 0, [120, 140, 255], 0.16);
+
+    // the galaxy's diffuse light: a halo, soft arms, a dust lane and the bulge
+    g.save(); g.translate(cx, cy); g.rotate(ANG); g.scale(1, TILT);
+    blob(g, 0, 0, R * 1.05, R * 1.05, 0, [120, 140, 255], 0.11);
     g.globalCompositeOperation = 'lighter';
-    var arm, t, rad, ph, x, y, fade;
+    var arm, t, rad, ph, fade;
     for (arm = 0; arm < 2; arm++) for (t = 0; t < 8.6; t += 0.07) {
       rad = R * 0.1 * Math.exp(0.26 * t); if (rad > R) break;
-      ph = t + arm * Math.PI; x = rad * Math.cos(ph); y = rad * Math.sin(ph); fade = 1 - rad / R;
-      blob(g, x, y, R * 0.07 + rad * 0.09, R * 0.05 + rad * 0.06, ph, t % 1.1 < 0.5 ? [150, 170, 255] : [230, 220, 255], 0.09 * fade + 0.03);
-      if (r() < 0.12) blob(g, x + (r() - 0.5) * rad * 0.2, y + (r() - 0.5) * rad * 0.2, R * 0.025, R * 0.02, 0, [255, 150, 210], 0.35 * fade);
+      ph = t + arm * Math.PI; fade = 1 - rad / R;
+      blob(g, rad * Math.cos(ph), rad * Math.sin(ph), R * 0.06 + rad * 0.08, R * 0.04 + rad * 0.05, ph, [150, 170, 255], 0.045 * fade + 0.012);
     }
     g.globalCompositeOperation = 'source-over';
-    for (arm = 0; arm < 2; arm++) for (t = 0.6; t < 8.6; t += 0.07) {
+    for (arm = 0; arm < 2; arm++) for (t = 0.6; t < 8.6; t += 0.05) {
       rad = R * 0.1 * Math.exp(0.26 * t) * 0.9; if (rad > R * 0.9) break;
       ph = t + arm * Math.PI + 0.22;
-      blob(g, rad * Math.cos(ph), rad * Math.sin(ph), rad * 0.07, rad * 0.035, ph, [4, 4, 12], 0.26 * (1 - rad / R));
+      blob(g, rad * Math.cos(ph), rad * Math.sin(ph), rad * 0.06, rad * 0.025, ph, [4, 4, 12], 0.3 * (1 - rad / R));
     }
-    blob(g, 0, 0, R * 0.3, R * 0.3, 0, [255, 236, 205], 0.55);
-    blob(g, 0, 0, R * 0.12, R * 0.12, 0, [255, 248, 230], 0.9);
+    blob(g, 0, 0, R * 0.3, R * 0.3, 0, [255, 236, 205], 0.4);
+    blob(g, 0, 0, R * 0.12, R * 0.12, 0, [255, 248, 230], 0.8);
     g.restore();
+
+    // then the galaxy itself, as thousands of tiny stars in screen space so they stay crisp
+    function P(x, y) { y *= TILT; return [cx + x * cosA - y * sinA, cy + x * sinA + y * cosA]; }
+    function N() { return Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(6.2832 * r()); }
+    function dot(p, c, a, s) { g.fillStyle = rgba(c, a); g.beginPath(); g.arc(p[0], p[1], s, 0, 6.2832); g.fill(); }
+    var n = Math.round(R * R / 5), i, u, x, y, sig, c, a;
+    for (i = 0; i < n; i++) {                                   // the arms
+      arm = i & 1; t = r() * 8.6; rad = R * 0.1 * Math.exp(0.26 * t); if (rad > R) continue;
+      ph = t + arm * Math.PI; fade = 1 - rad / R; sig = R * 0.025 + rad * 0.075;
+      x = rad * Math.cos(ph) + N() * sig; y = rad * Math.sin(ph) + N() * sig;
+      u = r(); c = u < 0.5 ? [185, 200, 255] : u < 0.85 ? [235, 236, 255] : [255, 228, 200];
+      a = (0.2 + r() * 0.6) * (0.3 + 0.7 * fade);
+      if (r() < 0.006) glow(g, P(x, y)[0], P(x, y)[1], 2.5 + r() * 2.5, [255, 160, 215], 0.6 * fade);
+      else dot(P(x, y), c, a, r() < 0.06 ? 0.9 : 0.35 + r() * 0.35);
+    }
+    for (i = 0; i < n * 0.45; i++) {                            // the disc between the arms
+      rad = -R * 0.32 * Math.log(1 - r()); if (rad > R) continue;
+      ph = r() * 6.2832; fade = 1 - rad / R;
+      dot(P(rad * Math.cos(ph), rad * Math.sin(ph)), [240, 236, 230], (0.12 + r() * 0.35) * (0.4 + 0.6 * fade), 0.3 + r() * 0.3);
+    }
+    for (i = 0; i < n * 0.3; i++) {                             // the bulge
+      rad = Math.abs(N()) * R * 0.11; ph = r() * 6.2832;
+      dot(P(rad * Math.cos(ph), rad * Math.sin(ph)), [255, 242, 220], 0.3 + r() * 0.6, 0.3 + r() * 0.45);
+    }
+
     stars(g, r, Math.round(w * h / 3200), w, h, 6, 1);
     gr = g.createRadialGradient(w * 0.5, h * 0.4, Math.min(w, h) * 0.25, w * 0.5, h * 0.4, Math.max(w, h) * 0.85);
     gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.42)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
