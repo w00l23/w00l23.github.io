@@ -84,7 +84,7 @@
     position: relative; overflow: hidden;
     min-height: 100vh; min-height: 100svh;
     display: flex; align-items: flex-end;
-    padding: 110px 0 15vh;
+    padding: 110px 0 12vh;
     background: linear-gradient(180deg, #05060f 0%, #090c1e 70%, #0f1428 100%);
   }
   #skyview {
@@ -107,6 +107,18 @@
   }
   .sky-chip button:hover { border-color: var(--cyan); }
   .sky-chip .hint { white-space: nowrap; }
+  .sky-chip .ask { max-width: 34ch; line-height: 1.4; }
+  .sky-chip .ask button { margin-left: 4px; }
+  /* when the Sun is up the sky is blue, so the words go dark */
+  .daysky .hero h1, .daysky .hero .lede strong, .daysky .sky-chip button, .daysky .hero .btn:not(.primary) { color: #0b1030; }
+  .daysky .hero .lede, .daysky .sky-chip { color: #141c40; }
+  .daysky header.top .brand, .daysky header.top nav.links a { color: #fff; text-shadow: 0 1px 8px rgba(10,30,80,.5); }
+  .daysky .hero .eyebrow { color: #0b4a62; }
+  .daysky .hero h1 em { background: none; -webkit-text-fill-color: #1a2470; color: #1a2470; filter: none; }
+  .daysky .hero h1, .daysky .hero .lede { text-shadow: 0 1px 0 rgba(255,255,255,.35), 0 0 18px rgba(255,255,255,.35); }
+  .daysky .hero .btn:not(.primary), .daysky .sky-chip button { border-color: rgba(11,16,48,.45); background: rgba(255,255,255,.35); }
+  .daysky .sky-chip { background: rgba(255,255,255,.5); border-color: rgba(11,16,48,.2); }
+  .daysky header.top .brand .dot { box-shadow: 0 0 10px rgba(255,255,255,.8); }
   .eyebrow {
     color: var(--cyan); font-size: 13px; letter-spacing: .22em; text-transform: uppercase;
     margin: 0 0 18px;
@@ -220,7 +232,7 @@
     .wrap { padding: 0 18px; }
     header.top .wrap { padding-top: 16px; padding-bottom: 16px; }
     nav.links a { margin-left: 14px; font-size: 14px; }
-    .hero { padding: 90px 0 12vh; }
+    .hero { padding: 90px 0 11vh; }
     .sky-chip { font-size: 12px; padding-left: 12px; }
     .sky-chip .hint { white-space: normal; }
     section { padding: 36px 0; }
@@ -268,6 +280,8 @@
       <div class="sky-chip" id="skyChip" hidden>
         <span class="hint">drag to look around · tap a star</span>
         <button type="button" id="skyMine">Use my sky</button>
+        <span class="ask" id="skyAsk" hidden>Your location stays on this device: used once to draw the sky, never sent or saved.
+          <button type="button" id="skyYes">Use it</button><button type="button" id="skyNo">Not now</button></span>
       </div>
     </div>
   </section>
@@ -587,7 +601,7 @@ const STAR_NAMES = [[0,"Sirius"],[1,"Canopus"],[2,"Arcturus"],[3,"Rigil Kentauru
     dpr = Math.min(window.devicePixelRatio || 1, W > 800 ? 2 : 1.5);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    yh = Math.round(H * 0.87);
+    yh = H - 6;
     sv = (yh - 48) / 72;                 // pixels a degree, up: the top of the sky is 72 degrees over the horizon
     var fov = W / sv; if (fov < 80) fov = 80; if (fov > 160) fov = 160;
     sh = W / fov;                         // pixels a degree, across
@@ -609,19 +623,23 @@ const STAR_NAMES = [[0,"Sirius"],[1,"Canopus"],[2,"Arcturus"],[3,"Rigil Kentauru
   function draw(t) {
     var i, x, y, s = t / 1000;
     // the sky: night, or the day's blue with the stars still in it
-    var day = Math.max(0, Math.min(1, (sunAlt + 12) / 18));
-    var top = [5 + 10 * day, 6 + 30 * day, 15 + 80 * day], bot = [15 + 25 * day, 20 + 60 * day, 40 + 110 * day];
+    // night to day over civil twilight: the sky goes blue and the stars go out
+    var day = Math.max(0, Math.min(1, (sunAlt + 10) / 14)); day = day * day * (3 - 2 * day);
+    var top = [5 + 29 * day, 6 + 76 * day, 15 + 155 * day], bot = [15 + 137 * day, 20 + 172 * day, 40 + 192 * day];
     var gr = ctx.createLinearGradient(0, 0, 0, yh);
-    gr.addColorStop(0, 'rgb(' + top.join(',') + ')'); gr.addColorStop(1, 'rgb(' + bot.join(',') + ')');
+    gr.addColorStop(0, 'rgb(' + top.map(Math.round).join(',') + ')'); gr.addColorStop(1, 'rgb(' + bot.map(Math.round).join(',') + ')');
     ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
-    // the city's own light, low on the horizon
-    var glow = ctx.createLinearGradient(0, yh - H * 0.22, 0, yh);
-    glow.addColorStop(0, 'rgba(255,170,110,0)'); glow.addColorStop(1, 'rgba(255,170,110,' + (0.10 - 0.08 * day) + ')');
-    ctx.fillStyle = glow; ctx.fillRect(0, yh - H * 0.22, W, H * 0.22);
-    var starDim = 1 - 0.6 * day;
+    // the city's own light low on the horizon at night; the Sun's warmth there at dusk and dawn
+    var dusk = Math.max(0, 1 - Math.abs(sunAlt + 2) / 9);
+    var glow = ctx.createLinearGradient(0, yh - H * 0.3, 0, yh);
+    glow.addColorStop(0, 'rgba(255,170,110,0)'); glow.addColorStop(1, 'rgba(255,' + Math.round(170 - 40 * dusk) + ',' + Math.round(110 - 50 * dusk) + ',' + (0.10 * (1 - day) + 0.42 * dusk).toFixed(2) + ')');
+    ctx.fillStyle = glow; ctx.fillRect(0, yh - H * 0.3, W, H * 0.3);
+    if (document.body) document.body.classList.toggle('daysky', day > 0.72);
+    var starDim = 1 - day;
     drawn.length = 0;
     // the stars
     for (i = 0; i < N; i++) {
+      if (starDim < 0.03) break;
       if (salt[i] < -0.5) continue;
       x = xOf(saz[i]); if (x < -4 || x > W + 4) continue;
       y = yOf(salt[i]); if (y < -4) continue;
@@ -643,9 +661,12 @@ const STAR_NAMES = [[0,"Sirius"],[1,"Canopus"],[2,"Arcturus"],[3,"Rigil Kentauru
       if (x < -20 || x > W + 20) continue;
       if (b.kind === 'sun') {
         if (b.alt < -6) continue;
-        ctx.globalAlpha = 0.25; ctx.fillStyle = 'rgb(' + b.col + ')'; ctx.beginPath(); ctx.arc(x, y, b.r * 3, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
-        ctx.beginPath(); ctx.arc(x, y, b.r, 0, TAU); ctx.fill();
+        var sg = ctx.createRadialGradient(x, y, b.r, x, y, b.r * 14);
+        sg.addColorStop(0, 'rgba(255,240,200,0.55)'); sg.addColorStop(1, 'rgba(255,220,160,0)');
+        ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(x, y, b.r * 14, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgb(255,248,225)'; ctx.beginPath(); ctx.arc(x, y, b.r, 0, TAU); ctx.fill();
       } else if (b.kind === 'moon') {
+        if (day > 0.3 && b.lit < 0.12) continue;      // a new Moon is lost in the daylight
         ctx.globalAlpha = 0.18 * starDim + 0.1; ctx.fillStyle = 'rgb(' + b.col + ')'; ctx.beginPath(); ctx.arc(x, y, b.r * 2.4, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
         ctx.fillStyle = 'rgb(38,42,64)'; ctx.beginPath(); ctx.arc(x, y, b.r, 0, TAU); ctx.fill();
         // the lit part: a half disc toward the Sun, and an ellipse for the terminator
@@ -655,12 +676,13 @@ const STAR_NAMES = [[0,"Sirius"],[1,"Canopus"],[2,"Arcturus"],[3,"Rigil Kentauru
         ctx.ellipse(x, y, rx, b.r, 0, Math.PI / 2, -Math.PI / 2, k * b.side < 0);
         ctx.fill();
       } else {
-        ctx.fillStyle = 'rgb(' + b.col + ')';
+        if (starDim < 0.15 && b.kind !== 'venus') continue;
+        ctx.fillStyle = 'rgba(' + b.col + ',' + Math.max(0.25, starDim).toFixed(2) + ')';
         ctx.globalAlpha = 0.16 * starDim + 0.04; ctx.beginPath(); ctx.arc(x, y, b.r * 3, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
         ctx.beginPath(); ctx.arc(x, y, b.r, 0, TAU); ctx.fill();
         if (b.kind === 'saturn') { ctx.strokeStyle = 'rgba(' + b.col + ',0.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, y, b.r * 2.1, b.r * 0.6, -0.3, 0, TAU); ctx.stroke(); }
       }
-      drawn.push([x, y, b.name, b.kind, -9]);
+      if (b.kind !== 'sun') drawn.push([x, y, b.name, b.kind, -9]);
     }
     // names: the Moon and the planets always, the brightest stars, and what was tapped
     ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif'; ctx.textBaseline = 'middle';
@@ -701,9 +723,9 @@ const STAR_NAMES = [[0,"Sirius"],[1,"Canopus"],[2,"Arcturus"],[3,"Rigil Kentauru
       }
     }
     // the compass, along the bottom
-    ctx.fillStyle = 'rgba(111,117,148,0.8)'; ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(190,196,222,0.7)'; ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif'; ctx.textAlign = 'center';
     var PTS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-    for (i = 0; i < 8; i++) { x = xOf(i * 45); if (x > 8 && x < W - 8) { ctx.fillText(PTS[i], x, H - 11); ctx.fillRect(x - 0.5, H - 24, 1, 5); } }
+    for (i = 0; i < 8; i++) { x = xOf(i * 45); if (x > 8 && x < W - 8) { ctx.fillText(PTS[i], x, H - 12); ctx.fillRect(x - 0.5, H - 26, 1, 6); } }
     ctx.textAlign = 'start';
   }
 
@@ -753,15 +775,23 @@ const STAR_NAMES = [[0,"Sirius"],[1,"Canopus"],[2,"Arcturus"],[3,"Rigil Kentauru
   setInterval(function () { compute(); followPicked(); if (reduce) redraw(); }, 30000);
 
   // "Use my sky": the visitor's own place, if they let the browser say
-  if (mineBtn && navigator.geolocation) {
-    mineBtn.addEventListener('click', function () {
-      mineBtn.disabled = true; mineBtn.textContent = 'Looking up…';
+  // The visitor's own place, if they let the browser say. The position is read
+  // once, used for the maths on this page, and never sent anywhere or stored.
+  var ask = document.getElementById('skyAsk'), yes = document.getElementById('skyYes'), no = document.getElementById('skyNo'), hint = chip && chip.querySelector('.hint');
+  function askClose() { if (ask) ask.hidden = true; if (hint) hint.hidden = false; mineBtn.hidden = false; }
+  if (mineBtn && ask && navigator.geolocation) {
+    mineBtn.addEventListener('click', function () { ask.hidden = false; if (hint) hint.hidden = true; mineBtn.hidden = true; if (yes) yes.focus(); });
+    if (no) no.addEventListener('click', askClose);
+    if (yes) yes.addEventListener('click', function () {
+      yes.disabled = true; yes.textContent = 'Looking up…';
       navigator.geolocation.getCurrentPosition(function (p) {
         lat = p.coords.latitude; lon = p.coords.longitude; mine = true;
         compute(); aim(); picked = null; redraw();
-        mineBtn.textContent = 'Over you'; 
-      }, function () { mineBtn.disabled = false; mineBtn.textContent = 'Houston it is'; setTimeout(function () { mineBtn.textContent = 'Use my sky'; }, 2500); },
-      { timeout: 8000, maximumAge: 600000 });
+        yes.disabled = false; yes.textContent = 'Use it'; askClose(); mineBtn.textContent = 'Over you'; mineBtn.disabled = true;
+      }, function () {
+        yes.disabled = false; yes.textContent = 'Use it'; askClose(); mineBtn.textContent = 'Houston it is';
+        setTimeout(function () { mineBtn.textContent = 'Use my sky'; }, 2500);
+      }, { timeout: 8000, maximumAge: 600000 });
     });
   } else if (mineBtn) mineBtn.hidden = true;
 
