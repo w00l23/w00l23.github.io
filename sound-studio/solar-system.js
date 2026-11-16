@@ -5,7 +5,7 @@ window.SolarBackdrop = (function(){
   'use strict';
 
   // Set by Sound Studio before this file loads (window.SOLAR_BG_OPTS); set() changes the live ones.
-  const BG = Object.assign({ pixels: 2.4e6, dpr: 2, el: 0.62, az: 0.4, turn: 1, sun: 0, planet: 0, glow: 0, each: {}, lift: 0 }, window.SOLAR_BG_OPTS || {});
+  const BG = Object.assign({ pixels: 2.4e6, dpr: 2, el: 0.62, az: 0.4, turn: 1, sun: 0, planet: 0, glow: 0, each: {}, lift: 0, dust: 1, grain: 1, line: 1, marker: 1 }, window.SOLAR_BG_OPTS || {});
   const BOX = document.createElement('div');
   BOX.innerHTML = "<div id=\"label\" aria-live=\"polite\">\n  <div><span class=\"nm\" id=\"lbName\"></span><span class=\"kd\" id=\"lbKind\"></span></div>\n  <div class=\"ft\" id=\"lbFacts\"></div>\n  <button class=\"pill\" id=\"lbGo\" type=\"button\" hidden></button>\n</div>\n\n<button class=\"pill\" id=\"home\" type=\"button\" data-en=\"\u2039 the whole system\" data-es=\"\u2039 todo el sistema\">\u2039 the whole system</button>\n<button class=\"pill\" id=\"out\" type=\"button\" data-en=\"the nearest stars \u203a\" data-es=\"las estrellas cercanas \u203a\">the nearest stars \u203a</button>\n<p id=\"far\" aria-hidden=\"true\"><span id=\"farA\"></span><span id=\"farB\"></span></p>\n<div id=\"names\" aria-hidden=\"true\"></div>\n<div id=\"night\" aria-hidden=\"true\"></div>\n\n<p class=\"hint\" id=\"hint\"></p>\n\n<div id=\"bar\">\n  <button class=\"pill\" id=\"date\" type=\"button\" aria-label=\"Date shown. Tap to come back to today.\"></button>\n  <span class=\"pace\" role=\"group\" aria-label=\"Pace of time\">\n    <button class=\"pill\" id=\"slower\" type=\"button\" aria-label=\"Slower\"><span class=\"sign\">\u2212</span></button>\n    <button class=\"pill\" id=\"paceLabel\" type=\"button\" aria-label=\"Pause or play\"></button>\n    <button class=\"pill\" id=\"faster\" type=\"button\" aria-label=\"Faster\"><span class=\"sign\">+</span></button>\n  </span>\n  <button class=\"pill\" id=\"scale\" type=\"button\" aria-pressed=\"false\" data-en=\"true distances\" data-es=\"distancias reales\">true distances</button>\n  <button class=\"pill\" id=\"journey\" type=\"button\" aria-pressed=\"false\" data-en=\"through the galaxy\" data-es=\"por la galaxia\">through the galaxy</button>\n  <button class=\"pill\" id=\"eclipse\" type=\"button\" data-en=\"next eclipse\" data-es=\"pr\u00f3ximo eclipse\">next eclipse</button>\n  <button class=\"pill\" id=\"sky\" type=\"button\" aria-pressed=\"false\" data-en=\"your sky tonight\" data-es=\"tu cielo esta noche\">your sky tonight</button>\n  <span class=\"pill\" id=\"placePill\"><span id=\"placeName\"></span><select id=\"place\" aria-label=\"Where you are\"></select></span>\n</div>\n\n<div id=\"veil\" aria-hidden=\"true\"></div>";
   const cv = document.createElement('canvas');
@@ -2497,7 +2497,7 @@ void main() {
   function measure() {
     if (skyOn) { measureSky(); return; }
     const F = cam.F;
-    const mkScale = clamp(Math.pow(HOME / dist, 0.3), 0.6, 1.5) * clamp(Math.min(W, H) / 620, 1, 1.35);
+    const mkScale = clamp(Math.pow(HOME / dist, 0.3), 0.6, 1.5) * clamp(Math.min(W, H) / 620, 1, 1.35) * BG.marker;
     SUN.mk = Math.max(6.5, Math.min(W, H) * 0.0125);
     order.length = 0;
     sunStar = FAR > 1000 ? smooth(lg(0.3 * LY), lg(1.5 * LY), lg(Math.max(len(toView(SUN.dp, _rel2)), 1e-9))) : 0;
@@ -2802,7 +2802,7 @@ void main() {
       gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 32, 0);
       gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 32, 16);
-      u1('uSize', size); u1('uAlpha', alpha); u3('uColor', colour);
+      u1('uSize', size * BG.grain); u1('uAlpha', alpha * BG.dust); u3('uColor', colour);
       gl.drawArrays(gl.POINTS, 0, n);
     };
     // a swarm seen small is the same grains on fewer pixels: thin it, or it burns white
@@ -2820,7 +2820,7 @@ void main() {
     u3('uRt', cam.rt); u3('uUp', cam.up); u3('uFw', cam.fw);
     u3('uMap', [MAP_K, MAP_R0, mapM]);
     u1('uF', px); u2('uInv', 2 / cv.width, 2 / cv.height);
-    u1('uHalfW', 1.15 * RES);
+    u1('uHalfW', 1.15 * RES * BG.line);
     u3('uColor', [0.59, 0.59, 0.80]);
     gl.bindBuffer(gl.ARRAY_BUFFER, orbitBuf);
     gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
@@ -2852,7 +2852,7 @@ void main() {
       lens(PR.trail);
       u3('uRt', cam.rt); u3('uUp', cam.up); u3('uFw', cam.fw);
       u1('uF', px); u2('uInv', 2 / cv.width, 2 / cv.height);
-      u1('uHalfW', 1.15 * RES);
+      u1('uHalfW', 1.15 * RES * BG.line);
       u3('uMap', [MAP_K, MAP_R0, mapM]);
       u3('uOrigin', [-cam.pos[0], -cam.pos[1], -cam.pos[2]]);
       gl.bindBuffer(gl.ARRAY_BUFFER, trailBuf);
