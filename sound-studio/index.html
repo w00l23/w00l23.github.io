@@ -683,7 +683,7 @@
       <button id="recLenBtn" class="skip-btn" title="how long a clip is: 15, 20 or 30 seconds" aria-label="clip length">20s</button>
       <button id="recFullBtn" disabled title="start the song over and record all of it"><span id="recFullLabel">◉ Full song</span></button>
     </div>
-    <div id="buildStamp" data-built="2026-11-16T04:23:55.440Z" title="when this copy of the studio was last changed"></div>
+    <div id="buildStamp" data-built="2026-11-16T08:11:10.878Z" title="when this copy of the studio was last changed"></div>
     <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. DIM in the panel sets how dark it sits behind the words.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning, and a big moment in the song can stand a rare violet sprite over a storm. With Reduce Motion there are no flashes at all.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
 <div id="hintScrim"></div>
   </div>
@@ -13863,6 +13863,9 @@ const STORMS = {
   SKY_PX: 3.2e6,             // the sky's picture is at most this many pixels (the station's is drawn at the screen's own, so its lines stay sharp)
   RIM: 0.5,                  // ← the rim of light along the station's under-edges, from the Earth's glow (0: a pure silhouette)
   GLINT: 0.5,                // ← the thin gold glint along the solar wings' edges (0: none)
+  FORM: 1,                   // ← how round the station reads: the soft sheen on its modules, the folds of its radiators, the glass of its wings (0: flat, as it was)
+  LAMP: 0.8,                 // ← the glow round its lit windows (0: the panes alone)
+  LAMP_VOICE: 0.5,           // ← and how much more of it while someone sings: it swells and settles with the airglow, never a flash (0: steady)
   WING_TURN_S: 340,          // ← the solar wings turn to and fro once in this many seconds (0: they hold)
   // the sunrise, and the aurora (neither with Reduce Motion: the sunrise never comes, the aurora holds still)
   SUNRISE_EVERY_S: 240, SUNRISE_S: 40,  // ← a sunrise comes this often, and lasts this long from the first blue to the last (EVERY 0: never)
@@ -13909,7 +13912,7 @@ const STORMS = {
   SPRITE_UP_S: 0.3, SPRITE_S: 2.6,      // ← it swells over this long and has faded by this
   SPRITE_LEVEL: 0.85,                   // ← how bright
 };
-const storms = { geo: null, sky: null, station: null, wings: null, plan: null, wingsAt: [0, 0], turns: null, dawn: 0, sun: null, ray: null, stars: null, isles: null, sprites: null, bigSprite: null,
+const storms = { geo: null, sky: null, station: null, wings: null, lamp: null, plan: null, wingsAt: [0, 0], turns: null, dawn: 0, sun: null, ray: null, stars: null, isles: null, sprites: null, bigSprite: null,
                  bgGrad: null, vigGrad: null, groundGrad: null, hazeGrad: null, glowGrad: null, glowTop: 0, glowBottom: 0,
                  seed: (Math.random()*1e9) | 0, skyRot: 0, travel: 0, t: 0, pace: 1, last: 0, bakeMs: 0,
                  voice: 0, treb: 0, voiceF: { mean: 0, dev: 0 }, trebF: { mean: 0, dev: 0 }, glowWide: null, glowWideTop: 0,
@@ -14332,11 +14335,16 @@ function stormsBake(){
 // little off-centre and cut by the frame: the main truss across, the solar
 // wings coming down toward the horizon (their far pairs going up out of
 // sight), the pale folded radiators either side of the middle, the modules
-// right of the middle running away forward with the two side labs at their
-// front, the arm resting along the truss, the dish on its boom, the two short
-// antenna booms and a few thin masts. Near-black, with a thin rim of light
-// along its under-edges from the Earth's glow, and a gold glint on the wings'
-// edges. `dawn` (0 night … 1 sunrise) warms the rim and the glint.
+// right of the middle running away forward (the Cupola's node and the airlock
+// by the truss, the two side labs at the front, the longer with its porch and
+// small arm, a capsule docked on the forward port), the arm resting along the
+// truss, the gear boxes under it, the dish on its boom, the two short antenna
+// booms and a few thin masts. Near-black, with a thin rim of light along its
+// under-edges from the Earth's glow and a gold glint on the wings' edges; and
+// round, not flat: a soft blue-violet sheen toward the lit side of each part
+// (FORM). A few warm windows are lit aboard, the Cupola's seven panes the
+// largest; their glow is laid over each frame (LAMP), and swells a little
+// with the voice. `dawn` (0 night … 1 sunrise) warms the rim and the glint.
 // It is drawn as lines and shapes, in a design 1440 wide, and laid out by
 // stormsStationPlan for this screen; the pictures are painted at the
 // screen's own pixels, so nothing is ever stretched and every line is sharp.
@@ -14355,7 +14363,13 @@ function stormsStationPaint(c, P, part, turns, dawn){
   const RIM = Math.round(mix(150, 255)) + ',' + Math.round(mix(166, 216)) + ',' + Math.round(mix(224, 164));
   const rim = a => 'rgba(' + RIM + ',' + (a*STORMS.RIM*mix(1, 1.6)).toFixed(3) + ')';
   const gold = a => 'rgba(255,204,122,' + Math.min(1, a*STORMS.GLINT*mix(1, 1.9)).toFixed(3) + ')';
-  const ty = x => 82 - 14*(x/1440), th = x => 9.5 + 4*(x/1440);     // the truss: its middle line, and half its depth
+  // Its form. The light is ahead and below (the Earth's glow on the horizon), so a round part shows a soft
+  // sheen coming up toward the side that faces it: still near-black, never brown. `tone` is that sheen
+  // (0 the dark side … 1 its fullest; at sunrise a touch fuller and a soft mauve, the gold kept for the rim), and `back` the thin violet the Milky Way lays along the far edge.
+  const LIT = [-0.35, 0.94], form = STORMS.FORM;
+  const tone = a => { a *= form; return 'rgb(' + Math.round(mix(4 + 32*a, 8 + 52*a)) + ',' + Math.round(mix(5 + 35*a, 8 + 45*a)) + ',' + Math.round(mix(11 + 60*a, 14 + 56*a)) + ')'; };
+  const back = a => 'rgba(172,128,255,' + (a*STORMS.RIM*form).toFixed(3) + ')';
+  const ty =x => 82 - 14*(x/1440), th = x => 9.5 + 4*(x/1440);     // the truss: its middle line, and half its depth
   const toVP = (x, y) => { const dx = VP[0] - x, dy = VP[1] - y, l = Math.hypot(dx, dy); return [dx/l, dy/l]; };
   const line = (a, b) => { c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); };
   const round = (x, y, w, h, r) => { c.beginPath(); if(c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h); };
@@ -14370,10 +14384,15 @@ function stormsStationPaint(c, P, part, turns, dawn){
     const quad = (u0, u1, v0, v1) => { c.beginPath(); let p = at(u0, v0); c.moveTo(p[0], p[1]); p = at(u1, v0); c.lineTo(p[0], p[1]); p = at(u1, v1); c.lineTo(p[0], p[1]); p = at(u0, v1); c.lineTo(p[0], p[1]); c.closePath(); };
     if(radiator){
       // pale and folded: an accordion of leaves, each catching the light a little differently
+      // (with FORM, each leaf is shaded along itself, one leaning to the light and the next away: the folds show)
       const n = Math.max(6, Math.round(len/13)), warm = mix(1, 1.25);
+      const leaf = l => 'rgb(' + Math.round(70*l*warm) + ',' + Math.round(74*l*warm) + ',' + Math.round((92 + 16*form)*l*warm) + ')';
       for(let i = 0; i < n; i++){
-        quad(0.03 + 0.97*i/n, 0.03 + 0.97*(i + 1)/n, -1, 1);
-        const l = (i % 2 ? 0.62 : 1)*warm; c.fillStyle = 'rgb(' + Math.round(70*l) + ',' + Math.round(74*l) + ',' + Math.round(92*l) + ')'; c.fill();
+        const u0 = 0.03 + 0.97*i/n, u1 = 0.03 + 0.97*(i + 1)/n, far = 1 + form*0.22*(i/n - 0.5);
+        quad(u0, u1, -1, 1);
+        const a = at(u0, 0), b = at(u1, 0), g = c.createLinearGradient(a[0], a[1], b[0], b[1]), flat = i % 2 ? 0.62 : 1;
+        g.addColorStop(0, leaf((flat + form*(i % 2 ? -0.14 : 0.26))*far)); g.addColorStop(1, leaf((flat + form*(i % 2 ? 0.2 : -0.2))*far));
+        c.fillStyle = g; c.fill();
       }
       c.strokeStyle = 'rgba(10,12,20,0.9)'; c.lineWidth = hair; c.beginPath(); for(let i = 1; i < n; i++){ const u = 0.03 + 0.97*i/n; line(at(u, -1), at(u, 1)); } c.stroke();
       c.strokeStyle = rim(1.8); c.lineWidth = hair*1.2; c.beginPath(); line(at(0.03, -1), at(1, -1)); line(at(1, -1), at(1, 1)); c.stroke();
@@ -14391,6 +14410,12 @@ function stormsStationPaint(c, P, part, turns, dawn){
       for(let j = 1; j < 4; j++){ const v = v0 + (v1 - v0)*j/4; line(at(0.05, v), at(1, v)); }
       c.stroke();
       c.strokeStyle = rim(1.1); c.lineWidth = hair; c.beginPath(); line(at(1, v0), at(1, v1)); c.stroke();
+    }
+    if(!aft && form > 0){                                    // glass: the far half of a forward wing takes a little of the sky's violet
+      quad(0.05, 1, -1, 1);
+      const s0 = at(0.3, 0), s1 = at(1, 0), vg = c.createLinearGradient(s0[0], s0[1], s1[0], s1[1]);
+      vg.addColorStop(0, 'rgba(124,98,236,0)'); vg.addColorStop(0.7, 'rgba(124,98,236,' + (0.10*form).toFixed(3) + ')'); vg.addColorStop(1, 'rgba(140,116,244,' + (0.17*form).toFixed(3) + ')');
+      c.fillStyle = vg; c.fill();
     }
     if(dawn > 0.01){                                        // the wing catches the sunrise: a soft warm sheen in from its lit edge, never a sharp light
       quad(0.05, 1, -1, 1);
@@ -14412,44 +14437,119 @@ function stormsStationPaint(c, P, part, turns, dawn){
     for(const [ax, len, t] of [[150, 268, tl*0.82], [252, 252, tl], [1192, 252, tr], [1296, 268, tr*0.82]]) panel(ax, len, 31, t, false);
     return;
   }
-  // a module: a dark drum along `dir`, its rings just visible, the rim of light along its under-side and round its far end
-  function drum(x, y, dir, len, r, rings){
-    c.save(); c.translate(x, y); c.rotate(Math.atan2(dir[1], dir[0]));
-    const g = c.createLinearGradient(0, -r, 0, r); g.addColorStop(0, '#03040a'); g.addColorStop(0.6, '#06070e'); g.addColorStop(1, 'rgb(' + Math.round(mix(13, 34)) + ',' + Math.round(mix(15, 30)) + ',' + Math.round(mix(26, 32)) + ')');
-    round(0, -r, len, r*2, r*0.42); c.fillStyle = g; c.fill();
-    c.strokeStyle = 'rgba(120,130,170,0.16)'; c.lineWidth = hair*0.8; c.beginPath();
-    for(let i = 1; i <= rings; i++){ const xx = len*i/(rings + 1); c.moveTo(xx, -r); c.lineTo(xx, r); }
+  // A hull: a module seen from below, lying along `dir`, r0 across at its near end and r1 at its far one (a cone
+  // when they differ). Round: dark on its far side, the sheen coming up toward its lit side, the rim of light
+  // along that edge and round its far end (`open`: that end is joined to something), a thin violet along the other.
+  function hull(p, dir, len, r0, r1, rings, open){
+    c.save(); c.translate(p[0], p[1]); c.rotate(Math.atan2(dir[1], dir[0]));
+    if(dir[0]*LIT[1] - dir[1]*LIT[0] < 0) c.scale(1, -1);          // its lit side is the one toward the glow
+    const R = Math.max(r0, r1), q = r0 === r1 ? r0*0.36 : 0, g = c.createLinearGradient(0, -R, 0, R);
+    g.addColorStop(0, tone(0.16)); g.addColorStop(0.14, tone(0)); g.addColorStop(0.48, tone(0.07)); g.addColorStop(0.76, tone(0.52)); g.addColorStop(0.9, tone(1)); g.addColorStop(1, tone(0.5));
+    c.beginPath();
+    if(q){ if(c.roundRect) c.roundRect(0, -r0, len, r0*2, q); else c.rect(0, -r0, len, r0*2); }
+    else { c.moveTo(0, -r0); c.lineTo(len, -r1); c.lineTo(len, r1); c.lineTo(0, r0); c.closePath(); }
+    c.fillStyle = g; c.fill();
+    for(let i = 1; i <= rings; i++){                              // its rings: a seam across, catching the light where the sheen is
+      const xx = len*i/(rings + 1), rr = r0 + (r1 - r0)*xx/len;
+      c.strokeStyle = 'rgba(120,130,170,0.16)'; c.lineWidth = hair*0.8; c.beginPath(); c.moveTo(xx, -rr); c.lineTo(xx, rr); c.stroke();
+      c.strokeStyle = rim(0.7*form); c.beginPath(); c.moveTo(xx, rr*0.5); c.lineTo(xx, rr); c.stroke();
+    }
+    c.strokeStyle = back(0.5); c.lineWidth = hair; c.beginPath(); c.moveTo(q, -r0); c.lineTo(len - q, -r1); c.stroke();
+    c.strokeStyle = rim(1.7); c.lineWidth = hair*1.3; c.beginPath(); c.moveTo(q, r0); c.lineTo(len - q, r1);
+    if(!open){ if(q) c.arcTo(len, r1, len, r1 - q, q); c.lineTo(len, -r1*0.3); }
     c.stroke();
-    c.strokeStyle = rim(1.7); c.lineWidth = hair*1.3; c.beginPath(); c.moveTo(r*0.4, r); c.lineTo(len - r*0.4, r); c.arcTo(len, r, len, r*0.4, r*0.4); c.lineTo(len, -r*0.3); c.stroke();
     c.restore();
+  }
+  // a small box: gear on the truss, a payload on a porch. Dark, the sheen low on it, the rim along its under-edge.
+  function box(x, y, w, h, lift){
+    const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, tone(0.05)); g.addColorStop(1, tone(lift));
+    c.fillStyle = g; c.fillRect(x, y, w, h);
+    c.strokeStyle = rim(1.3); c.lineWidth = hair; c.beginPath(); c.moveTo(x, y + h); c.lineTo(x + w, y + h); c.stroke();
   }
   // the radiators: three leaves each side of the middle
   for(const ax of [468, 497, 526, 1034, 1063, 1092]) panel(ax, 128, 10.5, 1, false, true);
-  // the main truss: a lattice beam across the top, lit along its under-edge
+  // the main truss: a lattice beam across the top, lit along its under-edge, darker toward its top
   const x0 = P.x0, x1 = P.x1;
   c.beginPath(); c.moveTo(x0, ty(x0) - th(x0)); c.lineTo(x1, ty(x1) - th(x1)); c.lineTo(x1, ty(x1) + th(x1)); c.lineTo(x0, ty(x0) + th(x0)); c.closePath();
-  c.fillStyle = '#04050b'; c.fill();
+  { const g = c.createLinearGradient(720 - 0.117, ty(720) - 12, 720 + 0.117, ty(720) + 12);          // across the beam, square to its slope
+    g.addColorStop(0, '#03040a'); g.addColorStop(0.55, tone(0.04)); g.addColorStop(1, tone(0.42)); c.fillStyle = g; c.fill(); }
   c.strokeStyle = 'rgba(125,135,178,0.2)'; c.lineWidth = hair*0.8; c.beginPath();
   for(let x = Math.floor(x0/24)*24; x < x1; x += 24){ c.moveTo(x, ty(x) - th(x)); c.lineTo(x + 24, ty(x + 24) + th(x + 24)); c.moveTo(x + 24, ty(x + 24) - th(x + 24)); c.lineTo(x, ty(x) + th(x)); c.moveTo(x, ty(x) - th(x)); c.lineTo(x, ty(x) + th(x)); }
   c.stroke();
-  c.strokeStyle = rim(2); c.lineWidth = hair*1.4; c.beginPath(); c.moveTo(x0, ty(x0) + th(x0)); c.lineTo(x1, ty(x1) + th(x1)); c.stroke();
-  // the joints the wings turn on
-  for(const x of [205, 1244]){
-    c.beginPath(); c.arc(x, ty(x), 15, 0, Math.PI*2); c.fillStyle = '#05060c'; c.fill();
-    c.strokeStyle = rim(1.2); c.lineWidth = hair; c.beginPath(); c.arc(x, ty(x), 15, 0.15, Math.PI - 0.15); c.stroke();
+  if(form > 0){                                              // its two long rails, just seen
+    c.strokeStyle = 'rgba(132,140,190,' + (0.17*form).toFixed(3) + ')'; c.lineWidth = hair; c.beginPath();
+    for(const v of [-0.45, 0.45]){ c.moveTo(x0, ty(x0) + th(x0)*v); c.lineTo(x1, ty(x1) + th(x1)*v); }
+    c.stroke();
+    // and the gear that rides under it: battery and pump boxes, the cart the arm stands on
+    for(const [x, w, h, lift] of [[306, 26, 9, 0.6], [364, 15, 6.5, 0.4], [426, 18, 8, 0.55], [694, 24, 7, 0.5], [752, 30, 10, 0.6], [796, 13, 6.5, 0.4], [1124, 15, 6.5, 0.4], [1172, 24, 9, 0.6], [1338, 18, 8, 0.5]])
+      box(x - w/2, ty(x) + th(x) - 1, w, h, lift);
   }
-  // the modules: right of the middle, running away forward, the two side labs at their front, a visiting ship on the forward port
-  { const mx = 930, my = ty(mx) + th(mx) - 2, d = toVP(mx, my), n = [-d[1], d[0]];
-    drum(mx, my, d, 62, 17, 1);
-    drum(mx + d[0]*64, my + d[1]*64, d, 84, 17, 3);
-    const hx = mx + d[0]*150, hy = my + d[1]*150;
-    drum(hx - n[0]*18, hy - n[1]*18, [-n[0]*0.98 + d[0]*0.1, -n[1]*0.98 + d[1]*0.1], 78, 14, 2);
-    drum(hx + n[0]*18, hy + n[1]*18, [n[0]*0.98 + d[0]*0.1, n[1]*0.98 + d[1]*0.1], 96, 16, 3);
-    c.save(); c.translate(hx + n[0]*112 + d[0]*26, hy + n[1]*112 + d[1]*26); c.rotate(Math.atan2(n[1], n[0]));          // the longer lab's porch
-    c.fillStyle = '#05060c'; c.fillRect(-22, -9, 44, 18); c.strokeStyle = rim(1.4); c.lineWidth = hair; c.strokeRect(-22, -9, 44, 18); c.restore();
-    drum(hx, hy, d, 56, 17, 1);
-    drum(hx + d[0]*58, hy + d[1]*58, d, 34, 11, 0);
-    c.fillStyle = 'rgba(255,214,150,0.75)'; c.beginPath(); c.arc(mx + d[0]*104 - n[0]*9, my + d[1]*104 - n[1]*9, 1.5, 0, Math.PI*2); c.fill(); }   // one small warm window, the only light aboard
+  c.strokeStyle = rim(2); c.lineWidth = hair*1.4; c.beginPath(); c.moveTo(x0, ty(x0) + th(x0)); c.lineTo(x1, ty(x1) + th(x1)); c.stroke();
+  // the joints the wings turn on: a drum end-on, its race ring inside
+  for(const x of [205, 1244]){
+    const y = ty(x), g = c.createLinearGradient(0, y - 15, 0, y + 15); g.addColorStop(0, '#04050b'); g.addColorStop(0.55, tone(0.06)); g.addColorStop(1, tone(0.62));
+    c.beginPath(); c.arc(x, y, 15, 0, Math.PI*2); c.fillStyle = g; c.fill();
+    if(form > 0){ c.strokeStyle = 'rgba(132,140,190,' + (0.3*form).toFixed(3) + ')'; c.lineWidth = hair; c.beginPath(); c.arc(x, y, 9.5, 0, Math.PI*2); c.moveTo(x + 3.2, y); c.arc(x, y, 3.2, 0, Math.PI*2); c.stroke(); }
+    c.strokeStyle = rim(1.2); c.lineWidth = hair; c.beginPath(); c.arc(x, y, 15, 0.15, Math.PI - 0.15); c.stroke();
+  }
+  // The modules: right of the middle, running away forward. From the truss: the first node, with the node that
+  // carries the Cupola on its left and the airlock on its right; the lab; the front node with the two side labs
+  // (the longer one with its porch and small arm); and on the forward port a visiting capsule, nose in.
+  // Aboard, a few warm windows: the Cupola's seven panes, the lab's, two at the long lab's end.
+  { const mx = 930, my = ty(mx) + th(mx) - 2, d = toVP(mx, my), n = [-d[1], d[0]], lamps = [];
+    const on = (a, s) => [mx + d[0]*a + n[0]*s, my + d[1]*a + n[1]*s];          // `a` along the stack from the truss, `s` to its left
+    const unit = (x, y) => { const l = Math.hypot(x, y); return [x/l, y/l]; };
+    const kd = unit(n[0]*0.98 + d[0]*0.1, n[1]*0.98 + d[1]*0.1), cd = unit(-n[0]*0.98 + d[0]*0.1, -n[1]*0.98 + d[1]*0.1);     // the side labs lean a touch forward
+    const pane = (p, r, glow) => {                             // a round window, lit from inside
+      const g = c.createRadialGradient(p[0], p[1], 0, p[0], p[1], r); g.addColorStop(0, 'rgba(255,236,200,0.95)'); g.addColorStop(1, 'rgba(255,190,112,0.8)');
+      c.fillStyle = g; c.beginPath(); c.arc(p[0], p[1], r, 0, Math.PI*2); c.fill();
+      lamps.push([p[0], p[1], glow, 0.8]);
+    };
+    // the Cupola's node and the airlock, either side of the first node
+    hull(on(34, 14), n, 53, 14, 14, 2);
+    hull(on(30, -14), [-n[0], -n[1]], 31, 13, 13, 1, true); hull(on(30, -46), [-n[0], -n[1]], 15, 8, 8, 0);
+    // the stack, with the collars it is joined by
+    hull(on(54, 0), d, 12, 11, 11, 0, true); hull(on(138, 0), d, 12, 11, 11, 0, true);
+    hull(on(0, 0), d, 58, 17, 17, 1);
+    hull(on(62, 0), d, 80, 17, 17, 3);
+    // the two side labs, and what they carry outside
+    { const root = on(173, 14), end = [root[0] + kd[0]*84, root[1] + kd[1]*84], pd = [-kd[1], kd[0]];
+      hull(root, kd, 84, 16, 16, 3);
+      c.save(); c.translate(end[0] + kd[0]*3, end[1] + kd[1]*3); c.rotate(Math.atan2(kd[1], kd[0]));        // the porch, out in the open (screen-down is -y here)
+      c.fillStyle = tone(0.06); c.fillRect(0, -9, 38, 18);
+      for(const [x, y, w, h, l] of [[3, -7, 9, 6, 0.6], [15, -7.5, 8, 7, 0.35], [26, -7, 9, 6, 0.5], [6, 1.5, 10, 6, 0.2], [21, 1, 11, 6.5, 0.28]]){ c.fillStyle = tone(l); c.fillRect(x, y, w, h); }
+      c.strokeStyle = rim(1.4); c.lineWidth = hair; c.beginPath(); c.moveTo(0, -9); c.lineTo(38, -9); c.lineTo(38, 9); c.stroke();
+      c.strokeStyle = back(0.5); c.beginPath(); c.moveTo(0, 9); c.lineTo(38, 9); c.stroke();
+      const arm = [[-7, -15], [11, -20.5], [25, -14]];                                                    // its small arm, folded over the porch
+      c.strokeStyle = '#080a13'; c.lineWidth = 2.6; c.lineCap = 'round'; c.beginPath(); arm.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke();
+      c.strokeStyle = rim(1.5); c.lineWidth = hair; c.beginPath(); arm.forEach((q, i) => i ? c.lineTo(q[0], q[1] - 1.4) : c.moveTo(q[0], q[1] - 1.4)); c.stroke();
+      for(const q of arm.slice(1)){ c.beginPath(); c.arc(q[0], q[1], 2.3, 0, Math.PI*2); c.fillStyle = '#0a0c16'; c.fill(); c.strokeStyle = rim(1.3); c.stroke(); }
+      c.lineCap = 'butt'; c.restore();
+      for(const v of [-5, 5]) pane([end[0] - kd[0]*6 + pd[0]*v, end[1] - kd[1]*6 + pd[1]*v], 1.3, 8); }
+    { const root = on(173, -14);
+      hull(root, cd, 62, 14.5, 14.5, 2);
+      c.save(); c.translate(root[0] + cd[0]*63, root[1] + cd[1]*63); c.rotate(Math.atan2(cd[1], cd[0]));
+      box(0, 4.5, 5, 6.5, 0.6); c.fillStyle = tone(0.2); c.fillRect(0, -11, 5, 6.5); c.restore(); }
+    // the front node over their roots, the docking cone, and the capsule: nose, cabin, trunk
+    hull(on(146, 0), d, 54, 17, 17, 1, true);
+    hull(on(200, 0), d, 9, 10, 7.5, 0, true);
+    hull(on(209.5, 0), d, 8, 6.5, 11, 0, true); hull(on(217.5, 0), d, 13, 11, 12.6, 0, true); hull(on(231, 0), d, 16, 12.3, 12.3, 1);
+    // the Cupola, looking straight down at us: six panes round one
+    { const p = on(34, 46), R0 = 10.6;
+      c.save(); c.translate(p[0], p[1]); c.rotate(Math.atan2(n[1], n[0]));
+      c.beginPath(); for(let i = 0; i < 6; i++){ const a = i*Math.PI/3 + Math.PI/6; c.lineTo(Math.cos(a)*R0, Math.sin(a)*R0); } c.closePath();
+      c.fillStyle = '#04050b'; c.fill(); c.strokeStyle = rim(1.5); c.lineWidth = hair*1.1; c.stroke();
+      const g = c.createRadialGradient(0, 0, 0, 0, 0, 9.4); g.addColorStop(0, 'rgba(255,238,204,0.96)'); g.addColorStop(0.5, 'rgba(255,214,150,0.88)'); g.addColorStop(1, 'rgba(255,184,104,0.74)');
+      c.fillStyle = g;
+      for(let i = 0; i < 6; i++){
+        const a0 = i*Math.PI/3 + Math.PI/6 + 0.1, a1 = (i + 1)*Math.PI/3 + Math.PI/6 - 0.1;
+        c.beginPath(); c.moveTo(Math.cos(a0)*4.9, Math.sin(a0)*4.9); c.lineTo(Math.cos(a0)*9, Math.sin(a0)*9); c.lineTo(Math.cos(a1)*9, Math.sin(a1)*9); c.lineTo(Math.cos(a1)*4.9, Math.sin(a1)*4.9); c.closePath(); c.fill();
+      }
+      c.beginPath(); c.arc(0, 0, 3.5, 0, Math.PI*2); c.fill();
+      c.restore();
+      lamps.push([p[0], p[1], 34, 1]); }
+    pane(on(104, 1), 2, 13);                                   // the lab's window
+    P.lamps = lamps; }
   // the arm, resting along the truss
   { const pts = [[705, ty(705) + th(705)], [690, ty(690) + 40], [612, ty(612) + 31], [548, ty(548) + 19]];
     c.strokeStyle = '#080a13'; c.lineWidth = 4.4; c.lineCap = 'round'; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
@@ -14496,6 +14596,12 @@ function stormsStationBake(G, dpr){
   storms.plan = P; storms.wingsAt = turns; storms.dawn = storms.dawn || 0;
   storms.wings = stormsStationLayer(G, P, storms.wings, 'wings', turns, storms.dawn);
   storms.station = stormsStationLayer(G, P, storms.station, 'body', turns, storms.dawn);
+  if(!storms.lamp){                                         // the glow round a lit window: one small picture, laid over each
+    const cv = storms.lamp = document.createElement('canvas'); cv.width = cv.height = 96;
+    const c = cv.getContext('2d'), g = c.createRadialGradient(48, 48, 0, 48, 48, 48);
+    g.addColorStop(0, 'rgba(255,206,138,0.62)'); g.addColorStop(0.22, 'rgba(255,186,112,0.26)'); g.addColorStop(0.55, 'rgba(255,170,104,0.07)'); g.addColorStop(1, 'rgba(255,170,104,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 96, 96);
+  }
 }
 // ---- The sunrise ----
 // Every few minutes the Sun comes up on the horizon ahead and to one side,
@@ -15001,6 +15107,18 @@ function drawStorms(now){
   const sx = -P.m + Math.sin(st*TWO/19)*sway, sy = -P.m + Math.sin(st*TWO/27 + 1)*sway*0.8;
   ctx.drawImage(storms.wings, sx, sy, storms.wings.width/P.dpr, storms.wings.height/P.dpr);
   ctx.drawImage(storms.station, sx, sy, storms.station.width/P.dpr, storms.station.height/P.dpr);
+  // The windows' glow: a small warm halo over each, a little fuller while
+  // someone sings (it follows the airglow's own eased voice, so it never snaps).
+  if(STORMS.LAMP > 0 && P.lamps){
+    const lv = STORMS.LAMP*(0.5 + 0.06*Math.sin(st*TWO/31) + STORMS.LAMP_VOICE*storms.voice);
+    ctx.globalCompositeOperation = 'lighter';
+    for(const [lx, ly, lr, ls] of P.lamps){
+      const rr = lr*P.k;
+      ctx.globalAlpha = Math.min(1, lv*ls);
+      ctx.drawImage(storms.lamp, sx + P.m + P.ox + lx*P.k - rr, sy + P.m + P.oy + ly*P.k - rr, rr*2, rr*2);
+    }
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  }
   ctx.restore();
 }
 // ============ end Above the Storms ============
