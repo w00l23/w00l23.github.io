@@ -683,7 +683,7 @@
       <button id="recLenBtn" class="skip-btn" title="how long a clip is: 15, 20 or 30 seconds" aria-label="clip length">20s</button>
       <button id="recFullBtn" disabled title="start the song over and record all of it"><span id="recFullLabel">◉ Full song</span></button>
     </div>
-    <div id="buildStamp" data-built="2026-11-16T03:47:20.676Z" title="when this copy of the studio was last changed"></div>
+    <div id="buildStamp" data-built="2026-11-16T04:23:55.440Z" title="when this copy of the studio was last changed"></div>
     <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. DIM in the panel sets how dark it sits behind the words.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning, and a big moment in the song can stand a rare violet sprite over a storm. With Reduce Motion there are no flashes at all.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
 <div id="hintScrim"></div>
   </div>
@@ -12827,6 +12827,11 @@ const ORBIT_SIM_PHONE_PIXELS = 2.0e6;   // ← how many pixels the solar system 
 const ORBIT_SIM_SMALL = [620, 390];     // ← the screen's short side, in points: from here … to here the small-screen look eases in
 const ORBIT_SIM_SMALL_DUST = 0.3;       // ← on a small screen: how bright the belts' dust is (1: as on a desktop)...
 const ORBIT_SIM_SMALL_GRAIN = 1.5;      // ← ...and how big each grain is drawn, so it is a soft dot and not a sharp one (1: as on a desktop)
+// Seen from the side the belts close into a thin band, and every grain lands
+// on the same few pixels: a bright, gritty streak across a phone. So on a
+// small screen the dust also dims as the eye comes down toward the planets'
+// plane, to this share of itself when the belts are seen edge-on.
+const ORBIT_SIM_SMALL_EDGE = 0.15;      // ← on a small screen, the dust seen edge-on (1: no dimmer than from above)
 const ORBIT_SIM_SMALL_LINE = 1.6;       // ← on a small screen: how wide the orbits and the spirals are drawn (1: as on a desktop)
 const ORBIT_SIM_SMALL_PLANET = 1.3;     // ← on a small screen: how big the planets are (1: as on a desktop)
 const ORBIT_SIM_SMALL_GLOW = 0.25;      // ← on a small screen: the soft glow every planet keeps, even when its part of the song is quiet (0: none)
@@ -12848,9 +12853,14 @@ function orbitSimApi(){
   // million the picture was drawn at two and stretched by half again to fit:
   // every planet and line a little blurred, every grain of dust a little
   // smeared. At 2 million it is drawn at about two and a half.
-  window.SOLAR_BG_OPTS = { pixels: phone ? ORBIT_SIM_PHONE_PIXELS : 3.2e6, dpr: phone ? 3 : 2, el: ORBIT_SIM_TILT, az: Math.random()*Math.PI*2, lift: ORBIT_SIM_LIFT };
+  orbitSim.budget = orbitSim.pixels = phone ? ORBIT_SIM_PHONE_PIXELS : 3.2e6;
+  window.SOLAR_BG_OPTS = { pixels: orbitSim.budget, dpr: phone ? 3 : 2, el: ORBIT_SIM_TILT, az: Math.random()*Math.PI*2, lift: ORBIT_SIM_LIFT };
   const sc = document.createElement('script');
-  sc.src = 'solar-system.js';
+  // Asked for by this page's own version, so a new page is never run with an
+  // old copy of the sim that the browser (a phone's Home Screen app, above
+  // all) had kept: the two are made for each other.
+  const built = document.getElementById('buildStamp');
+  sc.src = 'solar-system.js?v=' + encodeURIComponent((built && built.dataset.built) || document.lastModified || '');
   sc.onload = () => {
     const api = window.SolarBackdrop;
     orbitSim.api = api; orbitSim.state = api ? 'ready' : 'failed';
@@ -13482,13 +13492,21 @@ function drawOrbitSim(now, sim, bassLvl, voiceLvl, trebLvl){
   }
   const turn = circling ? 1 - jk : 1;      // the sim's own slow turn gives way to the circle
   const small = clamp01((ORBIT_SIM_SMALL[0] - Math.min(viewW, viewH))/(ORBIT_SIM_SMALL[0] - ORBIT_SIM_SMALL[1]));   // 0 on a desktop … 1 on a phone held upright
+  const flat = clamp01(Math.abs(Math.sin(view.el))/Math.sin(ORBIT_SIM_TILT));   // how open the belts lie to the eye: 1 from the home seat, 0 edge-on
+  const edgeOn = 1 + (ORBIT_SIM_SMALL_EDGE + (1 - ORBIT_SIM_SMALL_EDGE)*flat*flat - 1)*small;
+  // The sim is never drawn with more pixels than the picture it is laid into.
+  // When the governor draws the scene smaller, the sim follows it down (and
+  // back up): squeezed into a smaller picture its fine lines and grains broke
+  // up, and its cost never fell with the rest.
+  const simPixels = Math.min(orbitSim.budget, ctx.canvas.width*ctx.canvas.height);
+  if(simPixels !== orbitSim.pixels){ orbitSim.pixels = simPixels; sim.set({ pixels: simPixels }); }
   sim.set({
     planet: ORBIT_SIM_PULSE*E.kick*(0.4 + 0.6*E.loud)*calm*motion,
     sun: ORBIT_SIM_SUN*(0.7*E.bass + 0.3*E.kick)*calm*motion,
     glow: 0.6*E.glow + 0.5*bassGlow*C.bass*jk,
     each,
     turn,
-    dust: 1 + (ORBIT_SIM_SMALL_DUST - 1)*small,
+    dust: (1 + (ORBIT_SIM_SMALL_DUST - 1)*small)*edgeOn,
     grain: 1 + (ORBIT_SIM_SMALL_GRAIN - 1)*small,
     line: 1 + (ORBIT_SIM_SMALL_LINE - 1)*small,
     marker: 1 + (ORBIT_SIM_SMALL_PLANET - 1)*small,
