@@ -683,7 +683,7 @@
       <button id="recLenBtn" class="skip-btn" title="how long a clip is: 15, 20 or 30 seconds" aria-label="clip length">20s</button>
       <button id="recFullBtn" disabled title="start the song over and record all of it"><span id="recFullLabel">◉ Full song</span></button>
     </div>
-    <div id="buildStamp" data-built="2026-11-18T00:47:38.980Z" title="when this copy of the studio was last changed"></div>
+    <div id="buildStamp" data-built="2026-11-20T21:56:34.000Z" title="when this copy of the studio was last changed"></div>
     <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. DIM in the panel sets how dark it sits behind the words.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. When a song starts the scene opens from black: a thin line of blue-white light grows along the horizon from the right, the Earth and the sky come out of the dark behind it, right to left, and a gold solar wing swings slowly through the corner and away. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning: more of them as the song builds, a chain of clouds one after another at a big moment (with a gold glint along the station's wings, and now and then a rare violet sprite over a storm), and only a rare soft glow in a slow song. Aboard, the arm moves between poses now and then and a few small lights come and go. And now and then the sky does something of its own: a shooting star burns across the dark of the Earth just under the horizon (more of them in a song's quiet passages), a thin crescent Moon comes up over the horizon and climbs with the stars, and a satellite crosses the stars with a soft glint. In a song's last half minute the Sun comes up on the horizon, its light spreads across the Earth until the whole view is in daylight on the last note, and then the station flies on into the night again. With Reduce Motion there are no flashes, only a slow faint glow in a cloud now and then, the station holds still, the full view is there from the first note, and there is no ending, no shooting star, no Moon and no satellite.</p><p>🌍 Looking out, the style after it, is the same scene seen the other way: out from between the station's parts, with the Earth overhead in daylight (blue sea, white cloud, the thin blue line of the air along its curve) and black space below. A docked capsule and a module's edge on the left, a tall gold solar wing and a white module on the right, the Cupola along the bottom. The music does what it does in Above the Storms: the kick lights the cloud from inside, a big moment sends a chain across it and a gold glint along the wing, and the singer's voice lifts the line of air. The Earth only drifts. When the Moon is up, its crescent stands in the black below the Earth. With Reduce Motion it is a still frame.</p><p>🪟 Cupola, the style after that, is the same night seen straight down through the Cupola's seven windows: the towns, the cloud and the lightning glide slowly under the glass. The kick lights the cloud from inside, the window frames catch the lightning's light along their edges, a big moment sends a chain across the cloud and a gold glint along the frames, and the singer's voice lifts a faint violet in the air below. Now and then a shooting star burns across under the middle window. With Reduce Motion it is a still frame.</p><p>🌗 One orbit, the style after that, is the night view and the day view in one song. It opens on the night side (Above the Storms, with its reveal), dissolves slowly into the day side (Looking out) when a chorus lands, and comes back to the night when the song quietens. It never leaves a view sooner than half a minute after arriving, a song with no clear sections still goes round, and it is always back on the night side for the song's ending. With Reduce Motion both views hold still and only the dissolve between them is left.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
 <div id="hintScrim"></div>
   </div>
@@ -3123,6 +3123,7 @@ const CURTAIN_HUE_CEIL = 320;
 // below 0.3 is emerald — and an ordinary passage sits in the blue-violet
 // middle. A chorus (about 0.75 to 0.85) is violet to orchid; only at 0.9 and
 // above, the peak of a big song, does the room reach rose.
+const MOOD_TURN_PER_S = 0.04;   // ← the fastest the colour story may move, in mood per second (the story spans 0.6 of it: see curtainStoryPos). Higher = a quicker turn
 function curtainStoryPos(){
   const u = clamp01((moodBias - 0.30)/0.60);
   return u*u*(3 - 2*u);
@@ -5838,6 +5839,8 @@ function ensureAudioEngine(){
     onSongEnded();
     stormsRevealArm(false);   // the song played again is not a new start: Above the Storms' reveal is once for each song
     storms.end.landed = performance.now();   // ...and its ending holds its daylight a moment from here
+    fwOpenArm(false); fwShow.landed = performance.now();   // the firework sky: the same, with the dark
+    orbitOpenArm(false); orbitShow.landed = performance.now();   // Music Orbit: the same, with the Sun alone
     setPlayingUI(false); // the track is over — the button shouldn't still offer to pause it
     if(recorder && recFull) stopRecording();
     queueFollowOn();
@@ -5901,6 +5904,10 @@ function loadTrack(file){
   // which only runs forward, and not in its last ten seconds).
   stormsRevealArm(gameMode !== 'play' && !(libResume && libResume.id === libId(file)));   // Above the Storms opens from black for a song that starts from its beginning: once
   storms.end.landed = 0;                   // (and the last song's ending is over)
+  fwOpenArm(gameMode !== 'play' && !(libResume && libResume.id === libId(file)));   // the firework sky opens from black the same way
+  fwShow.landed = 0; fwShow.bouquet = false;
+  orbitOpenArm(gameMode !== 'play' && !(libResume && libResume.id === libId(file)));   // Music Orbit opens from black the same way
+  orbitShow.landed = 0;
   if(libResume && libResume.id === libId(file) && gameMode !== 'play'){
     const t = libResume.time;
     try{ audioEl.currentTime = t; }catch(e){}
@@ -9936,6 +9943,8 @@ const STARDUST = {
   CORD_GLOW: 0.9,        // how much brighter a cord gets right over a held note
   CORD_GLOW_W: 0.08,     // ...and how far either side it reaches (fraction of the width)
   PURPLE: [150, 30, 255], LAVENDER: [200, 120, 255], WHITE: [255, 250, 255],   // electric violet, lit violet, white
+  SHOW_DUST: false,      // the drifting motes themselves: off for now (too many particles on screen). The solo
+                         // read still runs, so the amethyst/crimson/gold colours and the cord glow keep working.
 };
 const sd = {
   // the ear
@@ -10253,6 +10262,7 @@ function drawStardust(now, dt, pass){
     for(const r of sd.ripples) r.t += dt;
     if(sd.ripples.length && sd.ripples[0].t > 2600) sd.ripples.shift();
   }
+  if(!STARDUST.SHOW_DUST) return;   // listening only: no motes drawn
   const w = viewW, h = viewH;
   const spr = sdSprites(), clk = sd.clock;
   const calmA = 0.55 + 0.4*moodEnergy;               // the drifting dust's own light: lit, and fuller with the room
@@ -11889,7 +11899,16 @@ let lurenaPerform = 0, lurenaKickE = 0, lurenaBurst = 0, lurenaT = 0;
 // the three light colours, the floor's neon hue walk and the glow sprites.
 let lurenaRgb = [], lurenaBarCols = [], lurenaBarTops = [], lurenaSparkSprites = [], lurenaPoolSprites = [];
 const LURENA_HUES = [190, 278, 330];   // cyan, violet, hot pink — the house rig
+const STAGE_WARM_MAX = 5;      // ← how many degrees past hot pink a track's tint may push the rig (330 + 5: still pink, never red)
 const LURENA_BARS = 60;
+// The floor's bars, laid out by pitch: each bar is the same musical step wide,
+// from STAGE_BAR_HZ[0] to STAGE_BAR_HZ[1]. (They used to follow the analyser's
+// bins on a curve that put most of the bars above 3 kHz, where a song has
+// little to show: the left quarter danced and the rest lay flat.) A song is
+// also quieter the higher you go, so each octave gets a little lift to keep
+// the right-hand bars standing as tall as the left.
+const STAGE_BAR_HZ = [40, 9000];
+const STAGE_BAR_TILT = 0.03;   // ← lift per octave above the lowest bar, as a share of full height
 const LURENA_POOL_PX = 128;
 
 function lurenaNewPart(any){
@@ -11913,7 +11932,11 @@ function buildLurenaScene(){
   lurenaBuilt = true;
   // The per-track tint, folded to ±45°: enough that no two tracks light the
   // stage alike, never so far that the rig stops being cyan, violet and pink.
-  const shift = (((trackHueShift + 180) % 360) - 180)*0.25;
+  // Folded again at the warm end: the pink lamp sits at 330, and any more
+  // than a few degrees past it is red, which this studio doesn't use. A
+  // track that would have leaned that way leans the cool way instead.
+  let shift = (((trackHueShift + 180) % 360) - 180)*0.25;
+  if(shift > STAGE_WARM_MAX) shift = 2*STAGE_WARM_MAX - shift;
   lurenaRgb = LURENA_HUES.map(hue => hslToRgb(hue + shift, 1, 0.55));   // full chroma: no pastel, no grey
   lurenaLightColor = rgbToHex(...lurenaRgb[0]); lurenaHairColor = rgbToHex(...lurenaRgb[1]);
   // The floor walks the spectrum the cool way round, one hue per bar:
@@ -12032,10 +12055,28 @@ function drawLurenaStage(now, bassLvl, voiceLvl, trebLvl){
     const n = LURENA_BARS, bw = w/n;
     const fd = (playing && viz && viz.freqData) ? viz.freqData : null;
     const bodyA = Math.min(1, 0.78 + kick*0.22), haloA = 0.16 + lift*0.08 + kick*0.1;
+    const stageBinHz = (viz && viz.binHz) || 21.5, stageOct = Math.log2(STAGE_BAR_HZ[1]/STAGE_BAR_HZ[0]);
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     for(let i=0;i<n;i++){
       let v;
-      if(fd){ const bi = Math.floor(Math.pow(i/n,1.7)*(fd.length*0.45))+2; v = fd[bi]/255; }
+      if(fd){
+        // this bar's slice of the spectrum with the lift for its pitch: averaged
+        // where the bar spans several of the analyser's bins, read between two
+        // of them where it is narrower than one (the low end, where a whole
+        // octave is only a few bins wide and the bars would stand in blocks)
+        const oct0 = stageOct*(i/n), oct1 = stageOct*((i+1)/n);
+        const p0 = STAGE_BAR_HZ[0]*Math.pow(2, oct0)/stageBinHz, p1 = STAGE_BAR_HZ[0]*Math.pow(2, oct1)/stageBinHz;
+        let raw;
+        if(p1 - p0 < 1.5){
+          const pc = Math.min(fd.length - 2, (p0 + p1)/2), k = Math.floor(pc), f = pc - k;
+          raw = (fd[k]*(1 - f) + fd[k+1]*f)/255;
+        } else {
+          const b0 = Math.floor(p0), b1 = Math.min(fd.length, Math.ceil(p1));
+          let sum = 0; for(let k=b0;k<b1;k++) sum += fd[k];
+          raw = sum/(b1 - b0)/255;
+        }
+        v = raw > 0.02 ? Math.min(1, raw + STAGE_BAR_TILT*oct0) : raw;   // silence stays flat: the lift is for sound that is there
+      }
       else v = 0.07 + 0.05*Math.sin(lurenaT*1.3+i*0.4);
       const barH = Math.pow(v,1.4)*h*0.24 + 3;
       const x = i*bw+1, bwi = bw-2;
@@ -12562,12 +12603,104 @@ function launchRocket(x, targetY, power, shape){
     color: currentTheme[Math.floor(Math.random()*currentTheme.length)], shape, sparkTimer:0});
 }
 
+// ---- The firework sky's opening and ending --------------------------------
+// The way Above the Storms arrives and leaves with its song. A song that starts
+// from its beginning opens on a black sky: one rocket goes up alone, and the
+// night (the stars, the Moon, the city) comes up behind the fireworks over the
+// next seconds. Over a song's last seconds the sky's lights go down by half;
+// a last bouquet of three rockets is sent up so that it opens on the last
+// note, and the sky goes fully dark as its sparks fall. It is held a moment,
+// and then the sky comes back. A song that follows (the queue) opens from that
+// dark. It is one black cover laid over the sky before the rockets and the
+// sparks are drawn, so the fireworks themselves are never dimmed.
+const FW_SHOW = {
+  OPEN: 1,              // ← 0: no opening, the whole sky from the first note
+  OPEN_S: 12,           // ← from black to the whole sky takes this long
+  END: 1,               // ← 0: no ending
+  END_S: 20,            // ← the sky's lights start down this long before the song's last note...
+  END_DIM: 0.5,         // ← ...and have gone down this far by the last note (1: black)
+  END_MIN_SONG_S: 90,   // ← a song shorter than this has no ending
+  BOUQUET: 3,           // ← how many rockets in the last bouquet (0: none; under Reduce Motion: one)
+  END_FALL_S: 2.5,      // ← after the last note the sky goes dark at about this pace, as the bouquet's sparks fall
+  END_HOLD_S: 7,        // ← the dark is held this long after the last note...
+  END_BACK_S: 4,        // ← ...and then the sky eases back at about this pace (and so it does if the song is wound back)
+};
+// on: the opening is running (p < 0: the sky as it stood is going dark first; 0 … 1: black to the whole sky).
+// d: how dark the cover is now, 0 … 1, eased. landed: when the last note went. bouquet: this song's has gone up.
+const fwShow = { armed: false, on: false, p: 0, d: 0, landed: 0, bouquet: false, last: 0 };
+function fwOpenArm(fromStart){ fwShow.armed = !!fromStart; }
+function fwShowHolding(now){ return !!fwShow.landed && now - fwShow.landed < FW_SHOW.END_HOLD_S*1000; }   // the dark after a song: no idle rockets yet
+function fwShowPaint(now){
+  const S = fwShow, O = FW_SHOW;
+  const gap = now - (S.last || now);
+  const dt = Math.max(0, Math.min(0.05, gap/1000));
+  S.last = now;
+  const ok = !micOn && gameMode !== 'play';
+  const playing = !!(audioEl && audioEl.src && !audioEl.paused && !audioEl.ended);
+  if(gap > 1000 && S.on){ S.on = false; S.d = 0; }           // the sky was away: its opening is not picked up halfway
+  if(S.armed && audioEl && audioLive()){
+    S.armed = false;                                          // once for each song, and only from its beginning
+    if(ok && O.OPEN > 0 && audioEl.currentTime < 3){ S.on = true; S.p = -1; }
+  }
+  if(S.on && !ok) S.on = false;
+  let to = 0, tau = O.END_BACK_S;
+  const ending = ok && O.END > 0 && !S.on && audioEl && isFinite(audioEl.duration) && audioEl.duration >= O.END_MIN_SONG_S;
+  if(ending){
+    const left = audioEl.duration - audioEl.currentTime;
+    if(S.landed){ if(now - S.landed < O.END_HOLD_S*1000){ to = 1; tau = O.END_FALL_S; } }   // the last note has gone: dark as the sparks fall, held, then back
+    else if(audioEl.currentTime > 0){
+      const e = clamp01(1 - left/O.END_S);
+      to = O.END_DIM*e*e*(3 - 2*e);
+      if(to > S.d) tau = 0.5;
+      // The last bouquet, sent up so that it opens on the last note: a rocket
+      // climbs at about (11 + 4·power) points a frame, sixty frames a second.
+      const power = 1.15, topY = viewH*0.26, lead = (viewH - topY)/((11 + power*4)*60);
+      if(left > 5) S.bouquet = false;                         // wound back: the song will end again
+      else if(playing && !S.bouquet && left <= lead + 0.05){
+        S.bouquet = true;
+        const n = reduceMotion ? Math.min(1, O.BOUQUET) : O.BOUQUET;
+        for(let i = 0; i < n; i++){
+          const x = viewW*(n === 1 ? 0.5 : 0.28 + 0.44*i/(n - 1));
+          launchRocket(x, topY + viewH*0.07*Math.abs(i - (n - 1)/2), power, pickShape());   // the middle one highest
+        }
+      }
+    }
+  }
+  if(S.on){
+    if(S.p < 0){
+      to = 1; tau = 0.25;                                      // from the sky as it stands, the dark comes down over a moment
+      if(S.d > 0.97){ S.p = 0; S.d = 1; launchRocket(viewW*0.5, viewH*0.3, 0.9, pickShape()); }   // ...and one rocket goes up alone
+    }
+    if(S.p >= 0){
+      if(playing) S.p += dt/O.OPEN_S;
+      const u = clamp01(S.p);
+      S.d = 1 - u*u*(3 - 2*u);                                 // (the opening's own clock: never behind it)
+      if(S.p >= 1){ S.on = false; S.d = 0; }
+      return fwShowCover(S.d);
+    }
+  }
+  if(gap > 1000) S.d = to;                                     // (the sky has just come on screen: it is wherever the song is)
+  else S.d += (to - S.d)*(1 - Math.exp(-dt/tau));
+  if(S.d < 0.003 && to === 0) S.d = 0;
+  fwShowCover(S.d);
+}
+function fwShowCover(d){
+  if(d <= 0) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = Math.min(1, d);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, viewW, viewH);
+  ctx.restore();
+}
+
 // --- Idle demo: keep the sky alive before/between songs ---
 let lastIdleBurst = 0;
 function maybeIdleFirework(now){
   if(isFullScene(currentShape)) return; // the rooms idle on their own
   const playing = audioLive();
   if(playing) return;
+  if(fwShowHolding(now)) return;   // a song has just ended: its last bouquet has the dark to itself
   if(now - lastIdleBurst > 1800 + Math.random()*1800){
     lastIdleBurst = now;
     const x = Math.random()*viewW*0.7 + viewW*0.15;
@@ -13154,6 +13287,86 @@ function orbitListen(now, bassLvl, voiceLvl, trebLvl){
   return dt;
 }
 
+// ---- Music Orbit's opening and ending ------------------------------------
+// The way Above the Storms arrives and leaves with its song. A song that starts
+// from its beginning opens in black: the Sun comes up alone, and its light
+// spreads outward over the planets, one orbit after another, until the whole
+// system is lit. Over a song's last seconds the dark closes back in from the
+// edge, so that on the last note only the Sun is left; it is held a moment,
+// and then the system comes back. A song that follows (the queue) opens from
+// that dark. It is one black cover with a soft-edged round opening centred on
+// the Sun, painted over the finished frame: nothing in the scene itself is
+// changed, the music still moves everything under it, and it costs one fill.
+const ORBIT_SHOW = {
+  OPEN: 1,              // ← 0: no opening, the whole system from the first note
+  OPEN_S: 16,           // ← from black to the whole system takes this long
+  OPEN_SUN: 0.16,       // ← the Sun comes up alone over this share of that time, before its light sets out
+  END: 1,               // ← 0: no ending
+  END_S: 24,            // ← the dark starts in from the edge this long before the song's last note
+  END_MIN_SONG_S: 90,   // ← a song shorter than this has no ending
+  END_HOLD_S: 5,        // ← the Sun alone is held this long after the last note...
+  END_BACK_S: 4,        // ← ...and then the system eases back at about this pace (and so it does if the song is wound back)
+  SUN_R: 0.12,          // ← the circle of light left round the Sun, against the screen's short side
+  SOFT: 0.24,           // ← how soft the edge of the light is, against the screen's short side
+};
+// on: the opening is running (p < 0: the scene as it stood is going dark first; 0 … 1: black to the whole system).
+// k: how much light the opening lets through at all, eased. e: how far into its ending the song is, eased.
+const orbitShow = { armed: false, on: false, p: 0, k: 1, e: 0, landed: 0, cx: 0, cy: 0, last: 0 };
+function orbitOpenArm(fromStart){ orbitShow.armed = !!fromStart; }
+function orbitShowPaint(now){
+  const S = orbitShow, O = ORBIT_SHOW;
+  const gap = now - (S.last || now);
+  const dt = Math.max(0, Math.min(0.05, gap/1000));
+  S.last = now;
+  const ok = !micOn && gameMode !== 'play';
+  const playing = !!(audioEl && audioEl.src && !audioEl.paused && !audioEl.ended);
+  if(gap > 1000 && S.on){ S.on = false; S.k = 1; }          // the scene was away: its opening is not picked up halfway
+  if(S.armed && audioEl && audioLive()){
+    S.armed = false;                                          // once for each song, and only from its beginning
+    if(ok && O.OPEN > 0 && audioEl.currentTime < 3){ S.on = true; S.p = -1; }
+  }
+  if(S.on && !ok) S.on = false;
+  // The ending's read: how far into it the song is, 0 … 1.
+  let to = 0;
+  if(ok && O.END > 0 && !(S.on && S.p >= 0) && audioEl && isFinite(audioEl.duration) && audioEl.duration >= O.END_MIN_SONG_S){
+    if(S.landed) to = now - S.landed < O.END_HOLD_S*1000 ? 1 : 0;      // the last note has gone: held a moment, then back
+    else if(audioEl.currentTime > 0) to = clamp01(1 - (audioEl.duration - audioEl.currentTime)/O.END_S);
+  }
+  if(gap > 1000) S.e = to;                                     // (the scene has just come on screen: it is wherever the song is)
+  else S.e += (to - S.e)*(1 - Math.exp(-dt/(to > S.e ? 0.5 : O.END_BACK_S)));
+  if(S.e < 0.002 && to === 0) S.e = 0;
+  // reach: how far the light gets, 0 the Sun's own circle … 1 everything. kTo: how much of it there is.
+  let kTo = 1, reach = 1 - orbitEase(S.e);
+  if(S.on){
+    if(S.p < 0){ kTo = 0; if(S.k < 0.02){ S.p = 0; S.e = 0; } }   // from the scene as it stands, the dark comes down over a moment
+    if(S.p >= 0){
+      if(playing) S.p += dt/O.OPEN_S;
+      kTo = sstep(0, O.OPEN_SUN, S.p);
+      reach = orbitEase(clamp01((S.p - O.OPEN_SUN*0.6)/(1 - O.OPEN_SUN*0.6)));
+      if(S.p >= 1) S.on = false;
+    }
+  }
+  S.k += (kTo - S.k)*(1 - Math.exp(-dt/0.3));
+  // Reduce Motion: no edge that travels. The whole picture comes up, and dims at the end, evenly.
+  let k = S.k;
+  if(reduceMotion){ k *= 0.25 + 0.75*reach; reach = 1; }
+  if(k > 0.998 && reach > 0.998) return;                       // the whole system, in full: nothing to paint
+  const w = viewW, h = viewH, mn = Math.min(w, h);
+  const cx = S.cx || w/2, cy = S.cy || h/2;
+  const far = Math.max(Math.hypot(cx, cy), Math.hypot(w - cx, cy), Math.hypot(cx, h - cy), Math.hypot(w - cx, h - cy));
+  const soft = O.SOFT*mn, r0 = O.SUN_R*mn;
+  const R = r0 + (far + soft - r0)*reach, d0 = Math.max(0, R - soft), d1 = R + soft;
+  const g = ctx.createRadialGradient(cx, cy, d0, cx, cy, d1);
+  for(let i = 0; i <= 6; i++){
+    const u = i/6;
+    g.addColorStop(u, 'rgba(0,0,0,' + (1 - k*(1 - u*u*(3 - 2*u))).toFixed(3) + ')');
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  ctx.restore();
+}
+
 function drawOrbit(now, bassLvl, voiceLvl, trebLvl){
   const E = orbitEar;
   const dt = orbitListen(now, bassLvl, voiceLvl, trebLvl);
@@ -13171,6 +13384,7 @@ function drawOrbit(now, bassLvl, voiceLvl, trebLvl){
   // screen, on any shape of screen.
   const w = viewW, h = viewH, mn = Math.min(w, h);
   const cx = w/2, cy = h*0.5;
+  orbitShow.cx = cx; orbitShow.cy = cy;                  // (the opening and the ending are centred on the Sun)
   const F = Math.min(D*w*0.44, h*0.43*(D - cP)/sP);
   const rxMax = F/D;                                        // the outermost orbit's half-width, seen side-on
   // world (x, y up, z) → screen. Returns [sx, sy, depth]; depth D is the sun's.
@@ -13423,8 +13637,10 @@ function drawOrbitSim(now, sim, bassLvl, voiceLvl, trebLvl){
     each[key] = ORBIT_SIM_SWELL*g.glow*motion;
   });
   // the trip out to the true distances, and back
+  // (Not while the opening is still spreading the light: a big moment in a
+  // song's first seconds is kept, and the trip sets out when the opening is done.)
   const T = orbitSimTrip;
-  if(lastSurge !== T.surge){
+  if(lastSurge !== T.surge && !orbitShow.on){
     T.surge = lastSurge;
     if(playing && !reduceMotion && !T.out && now - T.back > ORBIT_SIM_TRIP_REST && ORBIT_SIM_TRIPS.length){
       T.kind = ORBIT_SIM_TRIPS[T.n++ % ORBIT_SIM_TRIPS.length];
@@ -13536,6 +13752,7 @@ function drawOrbitSim(now, sim, bassLvl, voiceLvl, trebLvl){
   const w = viewW, h = viewH, mn = Math.min(w, h);
   const sunAt = sim.debug.where('sun');                  // the halo and the ring leave from the Sun, wherever the view has it
   const cx = sunAt && sunAt.shown ? sunAt.x : w/2, cy = sunAt && sunAt.shown ? sunAt.y : h/2;
+  orbitShow.cx = cx; orbitShow.cy = cy;                  // (the opening and the ending are centred on it)
   ctx.save();
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.drawImage(sim.canvas, 0, 0, w, h);
@@ -13741,6 +13958,7 @@ function drawRoom(name, now){
     if(sim) drawOrbitSim(now, sim, smoothBass, smoothVoice, smoothTreb);
     else if(orbitSim.state === 'loading'){ ctx.save(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, viewW, viewH); ctx.restore(); }   // a moment of dark while it arrives
     else drawOrbit(now, smoothBass, smoothVoice, smoothTreb);
+    orbitShowPaint(now);   // its opening and its ending: the dark over the finished frame, open round the Sun
     return true;
   }
   if(name === 'Storms'){
@@ -16535,11 +16753,18 @@ function draw(){
   // Colour story: the palette's own target follows the section read. chorusness
   // carries most of it (that IS "is this a chorus"), with the slow running
   // average nudging the baseline so a loud song sits warmer overall than a
-  // quiet one. Eased at 0.012/frame ≈ 2.5s to cross — you feel the colour turn
-  // as a section lands, but it never snaps. Held neutral during warm-up so a
-  // track doesn't open on a wrong guess.
+  // quiet one. Eased at 0.012/frame, and never faster than MOOD_TURN_PER_S:
+  // the ease alone was meant to take ≈ 2.5s to cross, but when the drums come
+  // in or drop out the section read swings its whole range in under a second,
+  // the target leaps with it, and the room went from teal to violet (or back)
+  // in about one second. Teal reads about twice as bright to the eye as violet
+  // at the same light, so the turn looked like the room's brightness jumping.
+  // With the cap the same turn takes about three seconds: you feel the colour
+  // turn as a section lands, but it never snaps. Held neutral during warm-up
+  // so a track doesn't open on a wrong guess.
   const biasTarget = songWarm < 1 ? 0.5 : clamp01(chorusness*0.8 + clamp01(moodSlow*2.6)*0.2);
-  moodBias += (biasTarget - moodBias) * 0.012;
+  const biasStep = (biasTarget - moodBias) * 0.012, biasCap = MOOD_TURN_PER_S/60;
+  moodBias += Math.max(-biasCap, Math.min(biasCap, biasStep));
   if(journeyOn) updateJourney(now);
   if(sceneFade){
     drawSceneFade(now, bgAlpha);
@@ -16568,6 +16793,7 @@ function draw(){
   updateCat(now, dt);
   drawCat(now);
   drawWaveform();
+  fwShowPaint(now);   // the sky's opening and ending: the dark over the sky, under the rockets and the sparks
   }
 
   // (Removed: the voice-reactive center glow — a full-screen radial wash of
