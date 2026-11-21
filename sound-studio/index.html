@@ -683,7 +683,7 @@
       <button id="recLenBtn" class="skip-btn" title="how long a clip is: 15, 20 or 30 seconds" aria-label="clip length">20s</button>
       <button id="recFullBtn" disabled title="start the song over and record all of it"><span id="recFullLabel">◉ Full song</span></button>
     </div>
-    <div id="buildStamp" data-built="2026-11-20T21:56:34.000Z" title="when this copy of the studio was last changed"></div>
+    <div id="buildStamp" data-built="2026-11-21T02:24:00.000Z" title="when this copy of the studio was last changed"></div>
     <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. DIM in the panel sets how dark it sits behind the words.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. When a song starts the scene opens from black: a thin line of blue-white light grows along the horizon from the right, the Earth and the sky come out of the dark behind it, right to left, and a gold solar wing swings slowly through the corner and away. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning: more of them as the song builds, a chain of clouds one after another at a big moment (with a gold glint along the station's wings, and now and then a rare violet sprite over a storm), and only a rare soft glow in a slow song. Aboard, the arm moves between poses now and then and a few small lights come and go. And now and then the sky does something of its own: a shooting star burns across the dark of the Earth just under the horizon (more of them in a song's quiet passages), a thin crescent Moon comes up over the horizon and climbs with the stars, and a satellite crosses the stars with a soft glint. In a song's last half minute the Sun comes up on the horizon, its light spreads across the Earth until the whole view is in daylight on the last note, and then the station flies on into the night again. With Reduce Motion there are no flashes, only a slow faint glow in a cloud now and then, the station holds still, the full view is there from the first note, and there is no ending, no shooting star, no Moon and no satellite.</p><p>🌍 Looking out, the style after it, is the same scene seen the other way: out from between the station's parts, with the Earth overhead in daylight (blue sea, white cloud, the thin blue line of the air along its curve) and black space below. A docked capsule and a module's edge on the left, a tall gold solar wing and a white module on the right, the Cupola along the bottom. The music does what it does in Above the Storms: the kick lights the cloud from inside, a big moment sends a chain across it and a gold glint along the wing, and the singer's voice lifts the line of air. The Earth only drifts. When the Moon is up, its crescent stands in the black below the Earth. With Reduce Motion it is a still frame.</p><p>🪟 Cupola, the style after that, is the same night seen straight down through the Cupola's seven windows: the towns, the cloud and the lightning glide slowly under the glass. The kick lights the cloud from inside, the window frames catch the lightning's light along their edges, a big moment sends a chain across the cloud and a gold glint along the frames, and the singer's voice lifts a faint violet in the air below. Now and then a shooting star burns across under the middle window. With Reduce Motion it is a still frame.</p><p>🌗 One orbit, the style after that, is the night view and the day view in one song. It opens on the night side (Above the Storms, with its reveal), dissolves slowly into the day side (Looking out) when a chorus lands, and comes back to the night when the song quietens. It never leaves a view sooner than half a minute after arriving, a song with no clear sections still goes round, and it is always back on the night side for the song's ending. With Reduce Motion both views hold still and only the dissolve between them is left.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
 <div id="hintScrim"></div>
   </div>
@@ -4295,6 +4295,7 @@ function setPlayRouting(withDelay){
     head.connect(masterOut(actx));
   }
   if(recorder && recDest) viz.analyser.connect(recDest); // a take in progress keeps its sound
+  if(lyrLock.an) viz.analyser.connect(lyrLock.an);       // ...and the lyric lock keeps its ear
 }
 
 function resetRhythm(){
@@ -5850,6 +5851,7 @@ function ensureAudioEngine(){
   audioMediaEl.addEventListener('play', onAudioPlayed);
   for(const ev of ['timeupdate','durationchange','loadedmetadata','seeked','emptied'])
     audioMediaEl.addEventListener(ev, syncTransport);
+  for(const ev of ['play','playing','seeked']) audioMediaEl.addEventListener(ev, lyrLockSoon);   // the moments the clock and the sound can part (see the lyric lock)
   audioEl = audioMediaEl;
   viz = audioViz;
   setPlayRouting(false);   // run the output through the volume control from the first note
@@ -6652,6 +6654,8 @@ function showSongLyrics(song){
     clearLyricLines();
     lyr = next;
   }
+  if(lyr && song) lyrLockBuild(song);   // a song with words: the lock gets its copy (once for each song)
+  else if(!song) lyrLockReset();
   syncLyricsUI();
 }
 
@@ -6697,12 +6701,120 @@ function lyricLineAt(lines, t){
 function lyricClock(){
   const actx = viz && viz.audioContext;
   const heard = actx ? (actx.outputLatency || actx.baseLatency || 0) : 0;
-  return audioEl.currentTime - heard - ((lyr && lyr.shift) || 0);
+  return audioEl.currentTime - lyrLock.off - heard - ((lyr && lyr.shift) || 0);
+}
+// --- The lyric lock ---
+// The player's clock (audioEl.currentTime) is where the words look, but it is
+// not always where the sound is. Played straight through the two agree; after
+// a pause or a jump Safari's engine can leave the clock a full second AHEAD
+// of what is sounding, and it stays there until the next pause or jump (see
+// docs/lyrics/README.md for the measurements). So the words check for
+// themselves: the song is decoded once into a small, coarse copy (LYR_LOCK.RATE
+// samples a second, one channel), and now and then the last two thirds of a
+// second that went to the speakers are found in that copy. The gap between
+// where they are and where the clock says is lyrLock.off, and lyricClock
+// takes it off. Only for a song that has words; nothing is sent anywhere.
+const LYR_LOCK = {
+  ON: 1,            // ← 0 turns the lock off (the words follow the player's clock alone, as before)
+  RATE: 1000,       // samples a second in the coarse copy (5 minutes = 1.2 MB)
+  DECODE_HZ: 8000,  // the song is decoded at this rate first (low, so a phone doesn't hold the whole song at full quality)
+  SEARCH_S: 1.6,    // ← how far either side of the clock the sound is looked for
+  MIN_MATCH: 0.6,   // a match weaker than this (0..1) is not believed
+  STAY: 0.04,       // the reading it has stands unless another place matches this much better (a loop repeats itself)
+  AFTER_MS: 1200,   // a check this long after play starts, a pause ends or a jump lands...
+  SETTLE_MS: 2500,  // ...another this long after it (the first second after a pause reads a little off)...
+  EVERY_MS: 15000,  // ...and then this often while the song plays
+  RETRY_MS: 1500,   // after a check that found nothing (a quiet passage)
+  MAX_SONG_S: 1200, // a longer file than this is left alone
+};
+const lyrLock = { off: 0, ref: null, rate: 0, song: null, an: null, win: null, due: 0, settle: false, match: 0, checks: 0 };
+function lyrLockReset(){
+  lyrLock.off = 0; lyrLock.ref = null; lyrLock.song = null; lyrLock.match = 0; lyrLock.checks = 0;
+}
+// The coarse copy of the song, made once when a song with words starts.
+async function lyrLockBuild(song){
+  if(!LYR_LOCK.ON || !song || lyrLock.song === song) return;
+  lyrLockReset();
+  lyrLock.song = song;
+  try{
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    let octx;
+    try{ octx = new OAC(1, 1, LYR_LOCK.DECODE_HZ); }catch(e){ octx = new OAC(1, 1, 44100); }   // an older Safari only decodes at full rate
+    const bytes = await song.arrayBuffer();
+    if(lyrLock.song !== song) return;
+    const buf = await new Promise((res, rej)=>{ const p = octx.decodeAudioData(bytes, res, rej); if(p && p.catch) p.catch(rej); });
+    if(lyrLock.song !== song || buf.duration > LYR_LOCK.MAX_SONG_S) return;
+    const q = Math.max(1, Math.round(buf.sampleRate/LYR_LOCK.RATE)), n = Math.floor(buf.length/q);
+    const ref = new Float32Array(n), chans = [];
+    for(let c = 0; c < Math.min(2, buf.numberOfChannels); c++) chans.push(buf.getChannelData(c));
+    for(let i = 0; i < n; i++){
+      let sum = 0;
+      for(const ch of chans) for(let k = 0; k < q; k++) sum += ch[i*q + k];
+      ref[i] = sum/(q*chans.length);
+    }
+    lyrLock.ref = ref; lyrLock.rate = buf.sampleRate/q;
+    lyrLockSoon();
+  }catch(e){}   // a file that won't decode this way: the words follow the clock alone
+}
+// One check: where the sound that just went out sits in the coarse copy.
+function lyrLockCheck(){
+  const actx = viz && viz.audioContext;
+  if(!actx || !lyrLock.ref || !audioEl || audioEl.paused || audioEl.seeking || audioEl.ended) return false;
+  if(!lyrLock.an){
+    lyrLock.an = actx.createAnalyser();
+    lyrLock.an.fftSize = 32768;
+    viz.analyser.connect(lyrLock.an);   // a listener beside the output: it passes nothing on
+    lyrLock.win = new Float32Array(lyrLock.an.fftSize);
+    return false;                       // it has heard nothing yet; next time
+  }
+  lyrLock.an.getFloatTimeDomainData(lyrLock.win);
+  const clock = audioEl.currentTime;
+  const w = lyrLock.win, ref = lyrLock.ref, rate = lyrLock.rate, q = actx.sampleRate/rate, m = Math.floor(w.length/q);
+  const live = new Float32Array(m);
+  let energy = 0;
+  for(let j = 0; j < m; j++){
+    const a = Math.floor(j*q), b = Math.floor((j + 1)*q);
+    let sum = 0;
+    for(let k = a; k < b; k++) sum += w[k];
+    live[j] = sum/(b - a); energy += live[j]*live[j];
+  }
+  if(energy/m < 1e-7) return false;     // silence: nothing to find
+  // the window ends "now": where the clock says that is, and where it was last found
+  const at = Math.round(clock*rate) - m, reach = Math.round(LYR_LOCK.SEARCH_S*rate);
+  const score = (L)=>{
+    let dot = 0, e2 = 0;
+    for(let i = 0; i < m; i++){ const r = ref[L + i]; dot += live[i]*r; e2 += r*r; }
+    return e2 > 0 ? dot/Math.sqrt(e2*energy) : 0;
+  };
+  let best = -1, bestL = -1;
+  for(let L = Math.max(0, at - reach); L <= Math.min(ref.length - m, at + reach); L++){
+    const sc = score(L);
+    if(sc > best){ best = sc; bestL = L; }
+  }
+  if(best < LYR_LOCK.MIN_MATCH) return false;
+  // a loop matches itself a beat away: the place it already has keeps its claim
+  const heldL = at - Math.round(lyrLock.off*rate);
+  if(lyrLock.checks && heldL >= 0 && heldL <= ref.length - m){
+    let held = -1, hL = heldL;
+    for(let L = Math.max(0, heldL - 3); L <= Math.min(ref.length - m, heldL + 3); L++){ const sc = score(L); if(sc > held){ held = sc; hL = L; } }
+    if(held > best - LYR_LOCK.STAY){ best = held; bestL = hL; }
+  }
+  lyrLock.off = (at - bestL)/rate;      // + = the clock is ahead of the sound
+  lyrLock.match = best; lyrLock.checks++;
+  return true;
+}
+function lyrLockSoon(){ lyrLock.due = performance.now() + LYR_LOCK.AFTER_MS; lyrLock.settle = true; }
+function lyrLockTick(nowMs){
+  if(!LYR_LOCK.ON || !lyrLock.ref || nowMs < lyrLock.due) return;
+  if(!lyrLockCheck()){ lyrLock.due = nowMs + LYR_LOCK.RETRY_MS; return; }
+  lyrLock.due = nowMs + (lyrLock.settle ? LYR_LOCK.SETTLE_MS : LYR_LOCK.EVERY_MS);
+  lyrLock.settle = false;
 }
 let breathAvg = 0, breathLvl = 0;
 function lyricsTick(){
   lyricsRaf = requestAnimationFrame(lyricsTick);
   if(!audioEl || !lyr) return;
+  lyrLockTick(performance.now());   // now and then: is the clock where the sound is?
   const now = lyricClock();
   const i = lyricLineAt(lyr.lines, now);
   if(i !== lyrIdx){
@@ -7539,7 +7651,7 @@ function tapMark(isBreak){
   const n = tapWords();
   if(!isBreak && n >= tap.lines.length) return;
   const actx = viz && viz.audioContext;
-  const heard = audioEl.currentTime - (actx ? (actx.outputLatency || actx.baseLatency || 0) : 0);
+  const heard = audioEl.currentTime - lyrLock.off - (actx ? (actx.outputLatency || actx.baseLatency || 0) : 0);
   tap.taps.push({ t: Math.max(0, heard - TAP_REACTION), text: isBreak ? '' : tap.lines[n] });
   tapShow();
 }
