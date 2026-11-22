@@ -386,6 +386,8 @@
   /* Timing row (Play mode): the offset, its two nudges and the tap test */
   #calRow{gap:5px;}
   #calRow .skip-btn{height:26px;width:28px;}
+  /* Stems line (Play mode): which instruments this song has been split into */
+  #stemNote{font-size:10px;color:#b8dbe0;letter-spacing:0.4px;line-height:1.5;}
   #calVal{flex:1;text-align:center;font-size:10px;letter-spacing:1px;color:#c6fffa;font-variant-numeric:tabular-nums;}
   #calSheet{position:fixed;left:0;right:0;bottom:7%;z-index:32;display:flex;justify-content:center;pointer-events:none;padding:0 16px;}
   #calSheet[hidden]{display:none;}
@@ -603,7 +605,7 @@
   <div id="panelBody">
     <div class="src-row">
       <label class="add-music tech-btn" id="addMusicBtn"><span id="addMusicLabel">＋ Add Music</span>
-        <input type="file" id="audioFile" accept="audio/*" multiple hidden></label>
+        <input type="file" id="audioFile" accept="audio/*,.json,application/json" multiple hidden></label>
       <button class="add-music tech-btn" id="micBtn" title="live mic: the visuals react to the room or your voice (M)" aria-pressed="false"><span class="mic-dot"></span><span id="micLabel">🎤 Mic</span></button>
     </div>
     <div id="songNote" role="status" hidden></div>
@@ -657,6 +659,8 @@
       <label>🎮 Mode</label>
       <div class="row" id="modes"></div>
       <div id="difficultySection" hidden>
+        <label>🥁 Instrument</label>
+        <div class="row" id="instrument"></div>
         <label>🌶️ Difficulty</label>
         <div class="row" id="difficulty"></div>
         <label>⏱ Timing</label>
@@ -666,6 +670,8 @@
           <button id="calPlus" class="skip-btn" title="judge the notes 5 ms later (hits read late)" aria-label="timing 5 milliseconds later">+</button>
           <button id="calBtn" class="ts-btn small" title="tap along to a click and the studio sets this for you">Tap test</button>
         </div>
+        <label>🎚 Stems</label>
+        <div id="stemNote" title="a stem is one instrument alone, cut out of the song on your Mac (tools/stems.py)"></div>
       </div>
     </div>
 
@@ -689,7 +695,7 @@
       <button id="recLenBtn" class="skip-btn" title="how long a clip is: 15, 20 or 30 seconds" aria-label="clip length">20s</button>
       <button id="recFullBtn" disabled title="start the song over and record all of it"><span id="recFullLabel">◉ Full song</span></button>
     </div>
-    <div id="buildStamp" data-built="2026-11-22T02:38:45.000Z" title="when this copy of the studio was last changed"></div>
+    <div id="buildStamp" data-built="2026-11-22T05:48:07.000Z" title="when this copy of the studio was last changed"></div>
     <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. DIM in the panel sets how dark it sits behind the words.</p><p>💫 Song galaxy grows a spiral out of the song. It starts as a small glow in the dark; as the song plays, two arms wind outward from it, and where the song is now is the tip of each arm. Every kick adds a handful of stars there, a quiet verse leaves a thin blue stretch, and a chorus leaves a bright one with pale gold in it. By the last note the whole song is there as one galaxy, turning slowly, and that galaxy is kept as the song's own picture: a small round dot beside its name in the song list (play it through again and the new one takes its place). With Reduce Motion it does not turn and nothing flashes.</p><p>🌌 Listen to the Sky turns a real picture of the sky into sound. A line crosses the picture from left to right and plays what it touches: the height is the pitch (the top is high), how bright it is is how loud, warm light is a soft pad, blue light is a bell, and white light and the stars are small chimes. The picture glows where the line is. Tap the picture to start (sound needs a tap, and on an iPhone the silent switch mutes it), tap a side for another picture, the middle to pause. A song that is playing waits while this is open and carries on when you choose another style. The three pictures are from the Hubble Space Telescope; each one's credit is under it.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. When a song starts the scene opens from black: a thin line of blue-white light grows along the horizon from the right, the Earth and the sky come out of the dark behind it, right to left, and a gold solar wing swings slowly through the corner and away. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning: more of them as the song builds, a chain of clouds one after another at a big moment (with a gold glint along the station's wings, and now and then a rare violet sprite over a storm), and only a rare soft glow in a slow song. Aboard, the arm moves between poses now and then and a few small lights come and go. And now and then the sky does something of its own: a shooting star burns across the dark of the Earth just under the horizon (more of them in a song's quiet passages), a thin crescent Moon comes up over the horizon and climbs with the stars, and a satellite crosses the stars with a soft glint. In a song's last half minute the Sun comes up on the horizon, its light spreads across the Earth until the whole view is in daylight on the last note, and then the station flies on into the night again. With Reduce Motion there are no flashes, only a slow faint glow in a cloud now and then, the station holds still, the full view is there from the first note, and there is no ending, no shooting star, no Moon and no satellite.</p><p>🌍 Looking out, the style after it, is the same scene seen the other way: out from between the station's parts, with the Earth overhead in daylight (blue sea, white cloud, the thin blue line of the air along its curve) and black space below. A docked capsule and a module's edge on the left, a tall gold solar wing and a white module on the right, the Cupola along the bottom. The music does what it does in Above the Storms: the kick lights the cloud from inside, a big moment sends a chain across it and a gold glint along the wing, and the singer's voice lifts the line of air. The Earth only drifts. When the Moon is up, its crescent stands in the black below the Earth. With Reduce Motion it is a still frame.</p><p>🪟 Cupola, the style after that, is the same night seen straight down through the Cupola's seven windows: the towns, the cloud and the lightning glide slowly under the glass. The kick lights the cloud from inside, the window frames catch the lightning's light along their edges, a big moment sends a chain across the cloud and a gold glint along the frames, and the singer's voice lifts a faint violet in the air below. Now and then a shooting star burns across under the middle window. With Reduce Motion it is a still frame.</p><p>🌗 One orbit, the style after that, is the night view and the day view in one song. It opens on the night side (Above the Storms, with its reveal), dissolves slowly into the day side (Looking out) when a chorus lands, and comes back to the night when the song quietens. It never leaves a view sooner than half a minute after arriving, a song with no clear sections still goes round, and it is always back on the night side for the song's ending. With Reduce Motion both views hold still and only the dissolve between them is left.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
 <div id="hintScrim"></div>
   </div>
@@ -4276,9 +4282,12 @@ function musicStumble(lane){
   // missed hand's instrument steps out of the mix and eases back in: the
   // song keeps rolling, it's just missing its bass (or its voice) for a
   // moment. Fast-but-smooth ramp down, slower ride back up.
-  const band = lane < 3 ? fxBass.gain : fxVoice.gain;
+  // (On the drum chart the kick sits on F and J: those take the low end, the
+  // snare and hi-hat keys the middle.)
+  const low = chartReady && chartKind === 'drums' ? (lane === 2 || lane === 3) : lane < 3;
+  const band = low ? fxBass.gain : fxVoice.gain;
   band.cancelScheduledValues(t);
-  band.setTargetAtTime(lane < 3 ? RHYTHM.STUMBLE_BASS_DB : RHYTHM.STUMBLE_VOICE_DB, t, RHYTHM.STUMBLE_ATTACK_S);
+  band.setTargetAtTime(low ? RHYTHM.STUMBLE_BASS_DB : RHYTHM.STUMBLE_VOICE_DB, t, RHYTHM.STUMBLE_ATTACK_S);
   band.setTargetAtTime(0, t + RHYTHM.STUMBLE_HOLD_S, RHYTHM.STUMBLE_RELEASE_S);
 }
 function setPlayRouting(withDelay){
@@ -4331,6 +4340,7 @@ function setGameMode(mode){
   document.querySelectorAll('#modes .shape-btn').forEach(el=>
     el.classList.toggle('active', el.dataset.mode === mode));
   if(mode === 'play'){
+    stemNoteSync();
     // A run is the song from its first bar: reads the chart, counts in, plays.
     if(lastFile && audioEl && audioEl.src && !libWaiting) startRun();
     else run.state = 'idle';
@@ -4379,6 +4389,34 @@ RHYTHM.TRAVEL_MS = DIFFICULTIES[difficulty].travel;
 RHYTHM.PERFECT_MS = DIFFICULTIES[difficulty].perfect;
 RHYTHM.GOOD_MS = DIFFICULTIES[difficulty].good;
 
+// Which instrument the notes follow. 'all' is the chart read from the song
+// itself (bass on S D F, the melody on J K L). 'drums' plays the drum stem's
+// own hits, when the song has been split (see "Stem charts"); a song that has
+// not falls back to 'all', and the Stems line says so.
+let instrument = 'all';
+let chartKind = 'all';    // what the chart in play was really made from: 'all' or an instrument's stem
+function setInstrument(name){
+  instrument = name;
+  chartKind = name;   // until the chart is built and says what it was really made from
+  document.querySelectorAll('#instrument .shape-btn').forEach(el=>
+    el.classList.toggle('active', el.dataset.inst === name));
+  chartFor = null; // another instrument is another chart
+  chartReady = false;
+  resetRhythm();
+  if(gameMode === 'play' && lastFile && run.state !== 'idle' && run.state !== 'ended') startRun();
+  else showBest();
+  stemNoteSync();
+}
+const instBar = document.getElementById('instrument');
+[['all','All'],['drums','Drums']].forEach(([name, labelTxt])=>{
+  const b = document.createElement('div');
+  b.className = 'shape-btn tech-btn' + (name === instrument ? ' active' : '');
+  b.dataset.inst = name;
+  b.textContent = labelTxt;
+  b.onclick = ()=> setInstrument(name);
+  instBar.appendChild(b);
+});
+
 // ---------- Song chart: whole-track pre-analysis ----------
 // Reactive spawning (notes born the instant a beat is detected) can never
 // feel like really playing the song — the game finds out about each beat
@@ -4409,9 +4447,54 @@ function gameClock(){
       if(run.state === 'countin') return -Math.max(0, run.countEnd - performance.now()) - lat - RHYTHM.CAL_MS;
       if(run.state === 'paused') return run.heldClock;
     }
-    return audioEl.currentTime*1000 - lat - RHYTHM.CAL_MS;
+    return audioEl.currentTime*1000 - clockLock - lat - RHYTHM.CAL_MS;
   }
   return performance.now();
+}
+// The game clock against the sound. The player's clock is not always where the
+// sound is: after a pause or a jump Safari's engine can leave it a full second
+// AHEAD of what is sounding, and it stays there (docs/lyrics/README.md has the
+// measurements; Chrome's engine and the Mac app stay within a few ms). The
+// lyrics already check this for themselves (the lyric lock, further down), and
+// a note chart needs it more than words do. So in play mode the lock is built
+// for every song, asked from the game's own frame, and what it reads comes off
+// gameClock as clockLock (ms; + = the clock is ahead of the sound).
+//
+// A small change is taken as it comes. A big one (the full second) is only
+// believed when a second reading, a moment later, says the same: one bad match
+// would otherwise throw the whole chart. When the clock does step back, the
+// notes that already went by are not played a second time (see drawRhythm).
+const GAME_LOCK = {
+  ON: 1,            // ← 0: the game follows the player's clock alone, as before
+  SMALL_MS: 60,     // a change up to this is taken at once (under the Good window: it cannot cost a note)
+  AGREE_MS: 40,     // a bigger one needs a second reading this close to the first...
+  CONFIRM_MS: 250,  // ...asked for this soon after
+};
+let clockLock = 0;
+const gameLock = { checks: 0, pending: null };
+function gameLockReset(){
+  clockLock = 0; gameLock.checks = 0; gameLock.pending = null;
+  lyrLock.off = 0; lyrLock.checks = 0;   // a run starts from a jump to the first bar: the last run's reading is not this one's
+}
+// Once a frame while a chart is in play. Returns how far the lock just moved
+// the clock (ms: + = back, − = forward, 0 = it did not).
+function gameLockSync(now){
+  if(!GAME_LOCK.ON || !LYR_LOCK.ON || lyrLock.song !== lastFile || !lyrLock.ref) return 0;
+  lyrLockTick(now);
+  if(lyrLock.checks === gameLock.checks) return 0;   // nothing new was read
+  gameLock.checks = lyrLock.checks;
+  const read = lyrLock.off*1000, step = read - clockLock;
+  if(Math.abs(step) > GAME_LOCK.SMALL_MS){
+    if(gameLock.pending === null || Math.abs(read - gameLock.pending) > GAME_LOCK.AGREE_MS){
+      gameLock.pending = read;
+      lyrLock.due = now + GAME_LOCK.CONFIRM_MS;      // ask again soon...
+      lyrLock.settle = true;                         // ...and once more after that: the first second after a pause reads a little off
+      return 0;
+    }
+  }
+  gameLock.pending = null;
+  clockLock = read;
+  return step;
 }
 
 // ---------- The run ----------
@@ -4442,6 +4525,10 @@ async function startRun(){
   showBest();
   await prepareChart();                              // builds the chart, or finds the one already built
   if(id !== run.id || gameMode !== 'play') return;   // another run, or another mode, took over meanwhile
+  if(GAME_LOCK.ON){   // the clock is checked against the sound (after the chart: one decode at a time)
+    lyrLockBuild(lastFile); gameLockReset();
+    if(viz) lyrLockEar(viz.audioContext);   // listening from the first note, so the first check is a real one
+  }
   if(!chartReady){                                   // no chart could be built: live notes, nothing to count in to
     beginPlay();
     if(cal.open) pauseRun();
@@ -4570,8 +4657,11 @@ function saveBest(file, diff, rec){
     localStorage.setItem(BEST_KEY, JSON.stringify(all));
   }catch(e){}
 }
+// Where a run's best is kept: by difficulty, and by instrument when the chart
+// was an instrument's own ('easy' stays the All chart's, so old bests stand).
+function bestSlot(){ return chartKind === 'all' ? difficulty : difficulty + '|' + chartKind; }
 function showBest(){
-  const b = gameMode === 'play' ? bestFor(lastFile, difficulty) : null;
+  const b = gameMode === 'play' ? bestFor(lastFile, bestSlot()) : null;
   hudBest.textContent = b ? 'BEST ' + Number(b.score).toLocaleString() + ' · ' + b.rank : '';
 }
 
@@ -4607,11 +4697,13 @@ async function prepareChart(){
   try{
     const built = await buildChart(req);
     if(id !== chartBuildId || req !== lastFile || gameMode !== 'play') return; // user moved on mid-build
-    chartFor = req; chartNotes = built.notes;
+    chartFor = req; chartNotes = built.notes; chartKind = built.kind || 'all';
+    showBest(); stemNoteSync();   // the best score and the Stems line are this chart's
     chartGrid = { beatMs: built.beatMs || 0, phase: built.phase || 0 };
     armChart(); // also drops any stray live-spawned notes (different clock)
   }catch(err){
     console.warn('Chart build failed — falling back to live detection:', err);
+    chartKind = 'all';
     if(id !== chartBuildId || req !== lastFile || gameMode !== 'play') return;
     setPlayRouting(true); // live fallback needs the audio delay to stay in sync
   }finally{
@@ -4691,6 +4783,11 @@ async function analyzeSong(file){
 // kept, how close together they may sit, which become holds. Cheap — a
 // difficulty change costs milliseconds.
 async function buildChart(file){
+  if(instrument === 'drums'){
+    const sc = await stemChartFor(file);
+    const hits = sc && sc.stems.drums && sc.stems.drums.hits;
+    if(hits && hits.length) return drumChart(hits);
+  }
   const { bassOn, voiceOn, voiceBand, vmax, grid } = await readSong(file);
 
   // Difficulty pruning: drop the weakest onsets — ghost kicks and bleed
@@ -4774,7 +4871,72 @@ async function buildChart(file){
   addBand(bassKept, 0);              // S D F — kicks, harder hits further out
   addBand(voiceKept, 3, sustainDur, melodic); // J K L — the melody + hold notes on long ones
   notesOut.sort((a,b)=>a.t - b.t);
-  return { notes: notesOut, beatMs: grid.beatMs, phase: grid.phase };
+  return { notes: notesOut, beatMs: grid.beatMs, phase: grid.phase, kind: 'all' };
+}
+
+// The drum chart: the drum stem's own hits (found on the Mac by
+// tools/stems.py), each note at its hit's exact moment — nothing is moved
+// onto the beat grid here. Six lanes, the kit laid across both hands:
+//   S D  hi-hat and cymbals   F J  kick   K L  snare and toms
+// and within each pair the harder hits sit on the outer key (S, J, L).
+// The difficulty decides how many hits are played, not where they are: the
+// weakest are dropped, and no two notes sit closer than the hand's gap. Where
+// two hits compete for a gap the kick or snare wins over the hi-hat, and then
+// the harder hit over the softer.
+const DRUM = {
+  KICK: 0, SNARE: 1, HAT: 2,
+  LANES: [[2, 3], [4, 5], [1, 0]],   // per kind: [softer, harder]
+  LABELS: ['HAT', 'HAT', 'KICK', 'KICK', 'SNARE', 'SNARE'],   // under the keys, lane by lane
+  GRID_MIN: 8,                       // kicks needed to read the beat from the kicks alone
+};
+function drumChart(hits){
+  const D = DIFFICULTIES[difficulty];
+  const kicks = hits.filter(h => h.kind === DRUM.KICK);
+  const grid = estimateGrid(kicks.length >= DRUM.GRID_MIN ? kicks : hits);
+  const gap = grid.beatMs ? Math.max(200, grid.beatMs*D.handBeats) : 520*D.handBeats;
+  // The weakest of each kind are left out first.
+  const kept = [];
+  for(let kind = 0; kind < 3; kind++){
+    const mine = hits.filter(h => h.kind === kind);
+    if(!mine.length) continue;
+    const s = mine.map(h => h.strength).sort((a, b) => a - b);
+    const floor = D.bassPrune ? s[Math.floor(s.length*D.bassPrune)] : 0;
+    for(const h of mine) if(h.strength >= floor) kept.push(h);
+  }
+  // Places are given out strongest first; a hit closer than the gap to one
+  // already placed is left out. (Buckets one gap wide: only the neighbours
+  // need looking at.)
+  const body = h => h.kind === DRUM.HAT ? 0 : 1;
+  kept.sort((a, b) => body(b) - body(a) || b.strength - a.strength || a.t - b.t);
+  const placed = new Map();
+  const play = [];
+  for(const h of kept){
+    const b = Math.floor(h.t/gap);
+    let free = true;
+    for(let d = -1; d <= 1 && free; d++){
+      const at = placed.get(b + d);
+      if(at) for(const t of at) if(Math.abs(t - h.t) < gap){ free = false; break; }
+    }
+    if(!free) continue;
+    if(placed.has(b)) placed.get(b).push(h.t); else placed.set(b, [h.t]);
+    play.push(h);
+  }
+  // Softer or harder than the middle of the hits of its kind that are played: that picks the key of the pair.
+  const mid = [0, 0, 0];
+  for(let kind = 0; kind < 3; kind++){
+    const s = play.filter(h => h.kind === kind).map(h => h.strength).sort((a, b) => a - b);
+    if(s.length) mid[kind] = s[Math.floor((s.length - 1)/2)];
+  }
+  // (Hits exactly at the middle take the two keys in turn: a drum machine's
+  // identical kicks still use both.)
+  play.sort((a, b) => a.t - b.t);
+  const turn = [0, 0, 0];
+  const notesOut = play.map(h => {
+    const m = mid[h.kind];
+    const hard = h.strength > m ? 1 : (h.strength < m ? 0 : (turn[h.kind] ^= 1));
+    return { lane: DRUM.LANES[h.kind][hard], t: h.t, dur: 0 };
+  });
+  return { notes: notesOut, beatMs: grid.beatMs, phase: grid.phase, kind: 'drums' };
 }
 
 // Onset picking: positive energy flux (things getting suddenly louder),
@@ -5299,16 +5461,26 @@ function drawRhythm(now){
       notes = notes.filter(n => n.judged || n.tArrive > now + CHART.ARM_SKIP_MS);
     }
   }
+  const lockStep = chartReady && run.state === 'playing' ? gameLockSync(now) : 0;   // is the clock where the sound is?
   const gnow = gameClock();
   // Chart mode: feed upcoming notes from the pre-built chart into play.
   if(chartReady){
-    if(gnow < lastGnow - CHART.RECUE_BACK_MS){
+    if(lockStep > CHART.RECUE_BACK_MS){
+      // The lock moved the clock back to where the sound is: the notes that
+      // already went by (played, missed, or at the line right now) are not
+      // sent down a second time. The next ones are simply further up the lanes.
+      // What was already judged stays as it was (a hold in progress goes on).
+      notes = notes.filter(n => n.judged);
+      for(const n of notes) n.judgedAt -= lockStep;
+      chartIdx = 0;
+      while(chartIdx < chartNotes.length && chartNotes[chartIdx].t < lastGnow + RHYTHM.GOOD_MS) chartIdx++;
+    }else if(gnow < lastGnow - CHART.RECUE_BACK_MS){
       // Seeked backward / song restarted: re-cue the chart from here.
       notes = [];
       chartIdx = 0;
       while(chartIdx < chartNotes.length && chartNotes[chartIdx].t < gnow + CHART.ARM_SKIP_MS) chartIdx++;
       if(gnow < 1000){ stats = freshStats(); updateHud(); summaryEl.style.display = 'none'; }
-    }else if(gnow > lastGnow + CHART.RECUE_FWD_MS){
+    }else if(gnow > lastGnow + CHART.RECUE_FWD_MS || lockStep < -RHYTHM.GOOD_MS){
       // The song ran on without us (the tab was hidden): what passed unseen
       // is skipped, not scored as a run of misses.
       notes = notes.filter(n => n.judged || n.tArrive > gnow + CHART.ARM_SKIP_MS);
@@ -5455,6 +5627,12 @@ function drawRhythm(now){
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = (flare > 0.3 || holdLane[i]) ? '#fff' : LANE_HEX[i];
     ctx.fillText(RHYTHM.LANE_KEYS[i].toUpperCase(), cx, g.hitY + 34);
+    if(chartReady && chartKind === 'drums'){   // which drum this key is
+      ctx.font = '700 8px Consolas, monospace';
+      ctx.fillStyle = 'rgba(' + LANE_RGB[i] + ',0.75)';
+      ctx.fillText(DRUM.LABELS[i], cx, g.hitY + 47);
+      ctx.font = '800 15px Consolas, monospace';
+    }
   }
   // NOTES: a bar of the lane's light with its halo behind it and a white-hot
   // core, brightening as it nears the line. A missed note turns crimson on
@@ -5643,11 +5821,11 @@ function onSongEnded(){
     (stats.stray ? ' / <span class="sm">' + stats.stray + ' empty</span>' : '');
   // The best finished run of this song at this difficulty (charted runs only:
   // live-detected notes differ from play to play, so their scores don't compare).
-  const prev = bestFor(lastFile, difficulty);
+  const prev = bestFor(lastFile, bestSlot());
   const isBest = chartReady && lastFile && (!prev || stats.score > prev.score);
-  if(isBest) saveBest(lastFile, difficulty, { score: stats.score, rank, acc, combo: stats.maxCombo });
+  if(isBest) saveBest(lastFile, bestSlot(), { score: stats.score, rank, acc, combo: stats.maxCombo });
   document.getElementById('sumBest').textContent =
-    isBest ? (prev ? '★ New best · was ' + Number(prev.score).toLocaleString() : '★ First score on ' + difficulty)
+    isBest ? (prev ? '★ New best · was ' + Number(prev.score).toLocaleString() : '★ First score on ' + difficulty + (chartKind === 'all' ? '' : ' ' + chartKind))
            : (prev ? 'Best ' + Number(prev.score).toLocaleString() + ' · ' + prev.rank : '');
   showBest();
   summaryEl.style.display = 'flex';
@@ -5905,6 +6083,8 @@ function loadTrack(file){
   resetBpm();
   resetRhythm(); // new track = fresh score/combo/notes
   lastFile = file;
+  chartKind = instrument;   // a new song: its chart will say what it was really made from
+  if(gameMode === 'play') stemNoteSync();
   loadSongCover(file);
   if(lyricsPending && !lyricsForSong(file)) giveLyrics(file, lyricsPending);
   lyricsPending = null;
@@ -6224,6 +6404,7 @@ function onSongUnplayable(){
     playQueueAt(i);
   }else{                                  // it was the last (or only) one: stop here
     lastFile = null;
+    stemNoteSync();                       // the Stems line was about the song that just left
     queueIdx = queue.length ? queue.length - 1 : -1;
     libWaiting = queue.length > 0;        // the song before it is ready, not playing
     playBtn.disabled = !queue.length;
@@ -6340,6 +6521,126 @@ function libForget(ids){
   libTx('readwrite', st => { for(const id of ids) st.delete(id); }).then(libMeasure, ()=>{});
   galaxyForget(ids);   // its kept galaxy goes with it
 }
+// --- Stem charts --------------------------------------------------------------
+// A stem is one instrument alone, cut out of the full song. Cutting a song
+// into stems is far too heavy for a page (and for a phone), so it is done once
+// on the Mac by tools/stems.py, which writes one small chart file for all the
+// songs it has split. Drop that file on the studio, or choose it with the song
+// picker, and each song's chart is kept in this browser (in the covers' store,
+// under its own 'stems|' key, so the library needs no new version).
+//
+// A chart names its song by a scrambled key, not its title: the song's size
+// and a short hash of its first and last 64 KB. The page works the same key
+// out from the song itself, so the two find each other with nothing typed.
+// For now a chart only says which stems a song has and how much of the song
+// each one is; the hits come with the instruments.
+const STEMS = {
+  ON: true,
+  KEY_HEAD: 65536,         // bytes hashed at each end of the song (KEY_HEAD in tools/stems.py)
+  KEY_RE: /^[0-9a-z]{1,12}-[0-9a-f]{16}$/,
+  MAX_FILE_MB: 64,         // a chart file bigger than this is not read
+  NAMES: ['drums', 'voice', 'bass', 'guitar', 'piano', 'other'],
+  PICK: ['drums', 'voice', 'bass', 'guitar'],   // the ones the game will offer
+  MAX_HITS: 20000,         // hits read for one stem of one song
+  HEARD: 0.05,             // a stem quieter than this share of the song is not in the song (no guitar, no singer)
+};
+const stemCharts = new Map();   // a song's key → its chart (null = looked, none kept)
+const stemNote = document.getElementById('stemNote');
+function stemStoreKey(k){ return 'stems|' + k; }
+function isStemFile(f){ return /\.json$/i.test(f.name); }
+function fnv1a(bytes){
+  let h = 0x811c9dc5;
+  for(let i = 0; i < bytes.length; i++) h = Math.imul(h ^ bytes[i], 0x01000193);
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
+// A promise of the song's key, worked out once per File.
+function stemKey(file){
+  if(file._stemKey) return file._stemKey;
+  const n = STEMS.KEY_HEAD;
+  const p = Promise.all([file.slice(0, n).arrayBuffer(), file.slice(Math.max(0, file.size - n)).arrayBuffer()])
+    .then(([a, b]) => file.size.toString(36) + '-' + fnv1a(new Uint8Array(a)) + fnv1a(new Uint8Array(b)));
+  p.catch(()=>{ if(file._stemKey === p) file._stemKey = null; });   // a read that failed is tried again next time
+  return file._stemKey = p;
+}
+// Only what the studio uses is taken from a chart, and only in the shape it
+// expects: the file comes from outside the page.
+function stemChartClean(c){
+  if(!c || typeof c !== 'object' || !c.stems || typeof c.stems !== 'object') return null;
+  const out = { dur: isFinite(c.dur) && c.dur > 0 ? +c.dur : 0, model: String(c.model || '').slice(0, 40), made: String(c.made || '').slice(0, 20), stems: {} };
+  for(const name of STEMS.NAMES){
+    const s = c.stems[name];
+    if(!s || typeof s !== 'object') continue;
+    out.stems[name] = { level: clamp01(+s.level || 0) };
+    // The drum stem's hits: [milliseconds, kind (0 kick, 1 snare, 2 hi-hat), strength 0..1], in order.
+    if(name === 'drums' && Array.isArray(s.hits)){
+      const hits = [];
+      for(let i = 0; i < s.hits.length && hits.length < STEMS.MAX_HITS; i++){
+        const h = s.hits[i];
+        if(!Array.isArray(h)) continue;
+        const t = +h[0], kind = +h[1];
+        if(!(t >= 0 && t < 3.6e6) || (kind !== 0 && kind !== 1 && kind !== 2)) continue;
+        hits.push({ t, kind, strength: clamp01(+h[2] || 0) });
+      }
+      hits.sort((a, b) => a.t - b.t);
+      if(hits.length) out.stems.drums.hits = hits;
+    }
+  }
+  return Object.keys(out.stems).length ? out : null;
+}
+// The chart for a song, or null: from this visit, else from the browser's store.
+async function stemChartFor(file){
+  if(!STEMS.ON || !file) return null;
+  let key;
+  try{ key = await stemKey(file); }catch(e){ return null; }
+  if(stemCharts.has(key)) return stemCharts.get(key);
+  let chart = null;
+  try{
+    const rec = await libTx('readonly', st => st.get(stemStoreKey(key)), COVER_STORE);
+    chart = stemChartClean(rec && rec.chart);
+  }catch(e){ return stemCharts.get(key) || null; }   // the store could not be read: not remembered as "none", so it is asked again
+  if(!stemCharts.has(key)) stemCharts.set(key, chart);   // a chart file read meanwhile is the newer word
+  return stemCharts.get(key);
+}
+// A chart file was dropped or chosen: every song in it is remembered.
+async function stemImport(list){
+  let songs = 0, unread = 0, kept = true;
+  for(const f of list){
+    let data = null;
+    if(f.size <= STEMS.MAX_FILE_MB*1048576){ try{ data = JSON.parse(await f.text()); }catch(e){} }
+    if(!data || data.soundStudioStems !== 1 || !data.songs || typeof data.songs !== 'object'){ unread++; continue; }
+    const recs = [];
+    for(const k of Object.keys(data.songs)){
+      const chart = STEMS.KEY_RE.test(k) ? stemChartClean(data.songs[k]) : null;
+      if(!chart) continue;
+      stemCharts.set(k, chart);
+      recs.push({ key: stemStoreKey(k), chart, at: Date.now() });
+    }
+    songs += recs.length;
+    if(recs.length){
+      try{ await libTx('readwrite', st => { for(const r of recs) st.put(r); }, COVER_STORE); }catch(e){ kept = false; }
+    }
+  }
+  if(songs) libNote('Stem charts read: ' + songs + (songs === 1 ? ' song' : ' songs') + (kept ? '' : ' (this browser would not keep them: they last until the page closes)'));
+  else if(unread) libNote('That file is not a stem chart');
+  if(songs && instrument !== 'all'){
+    chartFor = null;                                               // the next run reads the new chart...
+    if(gameMode === 'play' && run.state === 'reading') startRun();   // ...and a song being read right now is read again with it
+  }
+  stemNoteSync();
+}
+// The Stems line of the Game tab: what this song has been split into.
+function stemNoteSync(){
+  const f = lastFile;
+  if(!f){ stemNote.textContent = 'Add a song first'; return; }
+  stemChartFor(f).then((chart)=>{
+    if(f !== lastFile) return;   // another song took over meanwhile
+    if(!chart){ stemNote.textContent = 'None for this song yet' + (instrument === 'all' ? '' : ': playing the All notes'); return; }
+    const have = STEMS.PICK.filter(n => chart.stems[n] && chart.stems[n].level >= STEMS.HEARD);
+    let txt = have.length ? 'Ready: ' + have.join(' · ') : 'Split, but no drums, voice, bass or guitar was found';
+    if(instrument === 'drums' && !(chart.stems.drums && chart.stems.drums.hits)) txt += '. No drum hits in this song: playing the All notes';
+    stemNote.textContent = txt;
+  });
+}
 function libSaveState(){
   try{
     const cur = queue[queueIdx];
@@ -6383,6 +6684,8 @@ prevBtn.addEventListener('click', ()=>{ skipTrack(-1); prevBtn.blur(); });
 nextBtn.addEventListener('click', ()=>{ skipTrack(1); nextBtn.blur(); });
 fileInput.addEventListener('change', (e)=>{
   addToQueue(e.target.files);
+  const charts = Array.from(e.target.files).filter(isStemFile);
+  if(charts.length) stemImport(charts);   // the chart file from tools/stems.py, chosen like a song
   fileInput.value = '';   // so choosing the same song again still counts as a change
 });
 
@@ -6415,6 +6718,8 @@ window.addEventListener('drop', (e)=>{
   addToQueue(e.dataTransfer.files);
   const words = Array.from(e.dataTransfer.files).filter(f => /\.(lrc|txt)$/i.test(f.name));
   if(words.length) loadLyricsFiles(words);   // after the songs, so a song dropped with its .lrc is there to find
+  const charts = Array.from(e.dataTransfer.files).filter(isStemFile);
+  if(charts.length) stemImport(charts);   // the chart file from tools/stems.py
   const pics = Array.from(e.dataTransfer.files).filter(f => /^image\//i.test(f.type || ''));
   if(pics.length) setBackdropFile(pics[0]);   // a picture goes behind the Curtains
 });
@@ -6742,6 +7047,7 @@ const LYR_LOCK = {
   SEARCH_S: 1.6,    // ← how far either side of the clock the sound is looked for
   MIN_MATCH: 0.6,   // a match weaker than this (0..1) is not believed
   STAY: 0.04,       // the reading it has stands unless another place matches this much better (a loop repeats itself)
+  NEAR_S: 0.15,     // ...but only against a place further off than this: nearer is not a repeat, it is a finer reading
   AFTER_MS: 1200,   // a check this long after play starts, a pause ends or a jump lands...
   SETTLE_MS: 2500,  // ...another this long after it (the first second after a pause reads a little off)...
   EVERY_MS: 15000,  // ...and then this often while the song plays
@@ -6777,17 +7083,21 @@ async function lyrLockBuild(song){
     lyrLockSoon();
   }catch(e){}   // a file that won't decode this way: the words follow the clock alone
 }
+// The lock's ear: a listener beside the output (it passes nothing on). True
+// when it was only just made.
+function lyrLockEar(actx){
+  if(lyrLock.an) return false;
+  lyrLock.an = actx.createAnalyser();
+  lyrLock.an.fftSize = 32768;
+  viz.analyser.connect(lyrLock.an);
+  lyrLock.win = new Float32Array(lyrLock.an.fftSize);
+  return true;
+}
 // One check: where the sound that just went out sits in the coarse copy.
 function lyrLockCheck(){
   const actx = viz && viz.audioContext;
   if(!actx || !lyrLock.ref || !audioEl || audioEl.paused || audioEl.seeking || audioEl.ended) return false;
-  if(!lyrLock.an){
-    lyrLock.an = actx.createAnalyser();
-    lyrLock.an.fftSize = 32768;
-    viz.analyser.connect(lyrLock.an);   // a listener beside the output: it passes nothing on
-    lyrLock.win = new Float32Array(lyrLock.an.fftSize);
-    return false;                       // it has heard nothing yet; next time
-  }
+  if(lyrLockEar(actx)) return false;    // it has heard nothing yet; next time
   lyrLock.an.getFloatTimeDomainData(lyrLock.win);
   const clock = audioEl.currentTime;
   const w = lyrLock.win, ref = lyrLock.ref, rate = lyrLock.rate, q = actx.sampleRate/rate, m = Math.floor(w.length/q);
@@ -6818,7 +7128,8 @@ function lyrLockCheck(){
   if(lyrLock.checks && heldL >= 0 && heldL <= ref.length - m){
     let held = -1, hL = heldL;
     for(let L = Math.max(0, heldL - 3); L <= Math.min(ref.length - m, heldL + 3); L++){ const sc = score(L); if(sc > held){ held = sc; hL = L; } }
-    if(held > best - LYR_LOCK.STAY){ best = held; bestL = hL; }
+    // (a beat away, not a little to one side: a better match close by is the same place read more finely)
+    if(held > best - LYR_LOCK.STAY && Math.abs(bestL - hL) > LYR_LOCK.NEAR_S*rate){ best = held; bestL = hL; }
   }
   lyrLock.off = (at - bestL)/rate;      // + = the clock is ahead of the sound
   lyrLock.match = best; lyrLock.checks++;
