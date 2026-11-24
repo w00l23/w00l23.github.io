@@ -5,8 +5,14 @@
 <title>Sound Studio — Audio Reactive Fireworks</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root{ --cyan:#00fff2; --mag:#ff2bd6; }
-  html,body{margin:0;height:100%;background:#040407;overflow:hidden;font-family:'Consolas','Courier New',monospace;}
+  /* The look, "lit by the room": quiet dark glass, sentence case, one accent.
+     --room is the colour of the room on screen, set from script (tuneLyricsToRoom,
+     the same reading the lyrics' glow takes), so the panel, the cards and the
+     score sit in every room's own light. No red anywhere: that is a rule. */
+  :root{ --room:150,140,255; --ink:#eeecf6; --mute:rgba(238,236,246,0.64); --line:rgba(255,255,255,0.14);
+    --fill:rgba(255,255,255,0.07); --fill-2:rgba(255,255,255,0.13); --glass:rgba(14,13,22,0.7);
+    --on:rgba(var(--room),0.26); --on-line:rgba(var(--room),0.78); --live:#7df0b4; }
+  html,body{margin:0;height:100%;background:#040407;overflow:hidden;font-family:ui-rounded,system-ui,sans-serif;}
   canvas{display:block;position:absolute;top:0;left:0;transform-origin:50% 50%;touch-action:none;}
   /* The Pop look: a bloom layer screened over the picture, and darker edges. */
   #pop{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;mix-blend-mode:screen;}
@@ -18,43 +24,30 @@
   #brightRow{margin-top:6px;}
   #orbitRow{margin-top:5px;}
   #orbitRow[hidden]{display:none;}
-  body::after{content:'';position:fixed;inset:0;z-index:5;pointer-events:none;
-    background:repeating-linear-gradient(0deg, rgba(0,255,242,0.016) 0px, rgba(0,255,242,0.016) 1px, transparent 1px, transparent 4px);
-    mix-blend-mode:overlay;}
-  #panel{position:absolute;top:14px;left:14px;z-index:10;
-    background:linear-gradient(160deg, rgba(6,14,22,0.85), rgba(12,4,22,0.85));
-    /* The scene glows behind the panel now rather than being blocked by it —
-       the blur keeps the text readable while the sky bleeds through. */
-    backdrop-filter:blur(14px) saturate(1.6);
-    -webkit-backdrop-filter:blur(14px) saturate(1.6);
-    padding:13px 15px;color:#dcfffb;width:224px;border:1px solid rgba(0,255,242,0.85);
-    /* The neon rim. The clip-path cuts away any light outside the box, so
-       the glow is cast inward: a hot cyan line at the edge, a cyan wash
-       behind it and a magenta bloom deeper in. */
-    box-shadow:inset 0 0 0 1px rgba(0,255,242,0.35), inset 0 0 22px rgba(0,255,242,0.22), inset 0 0 64px rgba(255,43,214,0.12);
-    clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
-    transition:box-shadow 0.2s ease, border-color 0.2s ease, width 0.25s ease, padding 0.25s ease;}
-  #panel.sing{border-color:var(--mag);
-    box-shadow:inset 0 0 0 1px rgba(255,43,214,0.75), inset 0 0 30px rgba(255,43,214,0.42), inset 0 0 70px rgba(255,43,214,0.18);}
-  #panel h2{display:flex;align-items:center;gap:7px;margin:0 0 12px;font-size:12px;
-    letter-spacing:2.2px;text-transform:uppercase;color:#fff;font-weight:700;
-    text-shadow:0 0 6px var(--cyan), 0 0 18px rgba(0,255,242,0.75), 0 0 36px rgba(0,255,242,0.4);}
-  #panel h2 .bolt{text-shadow:0 0 8px var(--cyan), 0 0 18px var(--mag);}
-  #panelToggle,#helpToggle,#fsToggle{flex:none;width:20px;height:20px;padding:0;line-height:1;
-    background:rgba(0,255,242,0.1);border:1px solid rgba(0,255,242,0.8);color:#e4fffc;
-    font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;border-radius:2px;
-    box-shadow:0 0 7px rgba(0,255,242,0.3);transition:all 0.15s ease;}
-  #panelToggle:hover,#helpToggle:hover,#fsToggle:hover{background:rgba(0,255,242,0.25);color:#fff;border-color:var(--cyan);
-    box-shadow:0 0 12px rgba(0,255,242,0.7);}
+  /* One glass for the panel and every card (help, tap along, tap test, paused,
+     song complete): the room shows through, softened, and a hairline of the
+     room's colour sits just inside the edge. */
+  #panel,#hint,.ts-card,#gamePause .card,#summary .card{
+    background:var(--glass);border:1px solid var(--line);border-radius:16px;color:var(--ink);
+    -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);
+    box-shadow:0 12px 40px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(var(--room),0.12);}
+  #panel{position:absolute;top:14px;left:14px;z-index:10;padding:13px 14px;width:224px;
+    transition:border-color 0.3s ease, width 0.25s ease, padding 0.25s ease;}
+  #panel.sing{border-color:rgba(var(--room),0.6);}   /* the singer is singing: the edge takes the room's colour */
+  #panel h2{display:flex;align-items:center;gap:7px;margin:0 0 12px;font-size:14px;
+    letter-spacing:0.2px;color:#fff;font-weight:700;}
+  #panelToggle,#helpToggle,#fsToggle{flex:none;width:22px;height:22px;padding:0;line-height:1;
+    background:var(--fill);border:1px solid var(--line);color:var(--ink);
+    font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;border-radius:7px;
+    transition:background 0.15s ease;}
+  #panelToggle:hover,#helpToggle:hover,#fsToggle:hover{background:var(--fill-2);color:#fff;}
   #helpToggle{margin-left:auto;}
-  #helpToggle.on{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;
-    border-color:transparent;box-shadow:0 0 10px rgba(0,255,242,0.85), 0 0 22px rgba(255,43,214,0.5);}
+  #helpToggle.on{background:var(--on);border-color:var(--on-line);color:#fff;}
   #panel.min #helpToggle,#panel.min #fsToggle{display:none;}
-  #miniBpm{display:none;font-size:10px;color:#fff;letter-spacing:1px;
-    text-shadow:0 0 8px rgba(255,43,214,0.95), 0 0 18px rgba(255,43,214,0.55);}
-  /* Collapsed: the whole studio folds into a tiny ⚡ chip so the sky owns
-     the screen. The chip still pulses magenta when the singer sings. */
-  #panel.min{width:auto;padding:7px 11px;cursor:pointer;}
+  #miniBpm{display:none;font-size:12px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums;}
+  /* Collapsed: the whole studio folds into a small chip so the sky owns the
+     screen. Its edge still takes the room's colour when the singer sings. */
+  #panel.min{width:auto;padding:7px 11px;cursor:pointer;border-radius:999px;}
   #panel.min h2{margin:0;}
   #panel.min .ttl{display:none;}
   #panel.min #miniBpm{display:inline;}
@@ -62,113 +55,77 @@
   /* With a queue and the transport in it the panel can be taller than a small
      window; it scrolls inside itself rather than running off the bottom. */
   #panelBody{max-height:calc(100vh - 86px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
-    padding:4px;margin:-4px;   /* room for the corner brackets, which sit just outside their buttons */
-    scrollbar-width:thin;scrollbar-color:rgba(0,255,242,0.55) transparent;}
-  @keyframes flicker{0%,92%,100%{opacity:1;}93%{opacity:0.55;}94%{opacity:1;}95%{opacity:0.7;}96%{opacity:1;}}
+    padding:4px;margin:-4px;   /* room for a focus ring, which sits just outside its button */
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) transparent;}
+  button:focus-visible{outline:2px solid rgba(var(--room),0.95);outline-offset:2px;}
   .add-music{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;
-    padding:10px 8px;border:1.5px dashed rgba(0,255,242,0.85);
-    background:linear-gradient(180deg, rgba(0,255,242,0.2), rgba(0,255,242,0.05));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.15), inset 0 0 14px rgba(0,255,242,0.14), 0 2px 5px rgba(0,0,0,0.45);
-    color:#f2fffe;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-    text-shadow:0 0 8px rgba(0,255,242,0.75);
-    font-family:inherit;cursor:pointer;transition:all 0.15s ease;text-align:center;
-    clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
-  .add-music:hover{background:linear-gradient(180deg, rgba(0,255,242,0.3), rgba(0,255,242,0.1));border-color:var(--cyan);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.2), inset 0 0 18px rgba(0,255,242,0.3);}
-  .add-music:active{transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(0,0,0,0.5);}
-  .add-music.loaded{border-style:solid;border-color:var(--mag);
-    background:linear-gradient(180deg,rgba(0,255,242,0.2),rgba(255,43,214,0.2));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.15), inset 0 0 16px rgba(255,43,214,0.3);
-    text-shadow:0 0 8px rgba(255,43,214,0.85);}
-  label{font-size:9px;color:#4dfff2;display:block;margin-top:12px;margin-bottom:5px;
-    text-transform:uppercase;letter-spacing:1.6px;font-weight:600;text-shadow:0 0 7px rgba(0,255,242,0.55);}
+    padding:9px 8px;border:1px dashed rgba(255,255,255,0.32);border-radius:10px;background:var(--fill);
+    color:var(--ink);font-size:12px;font-weight:600;
+    font-family:inherit;cursor:pointer;transition:background 0.15s ease, border-color 0.15s ease;text-align:center;}
+  .add-music:hover{background:var(--fill-2);border-color:rgba(255,255,255,0.5);}
+  .add-music:active{transform:translateY(1px);}
+  .add-music.loaded{border-style:solid;border-color:var(--on-line);background:var(--on);color:#fff;}
+  label{font-size:11px;color:var(--mute);display:block;margin-top:11px;margin-bottom:5px;
+    letter-spacing:0.2px;font-weight:600;}
   .row{display:flex;gap:5px;flex-wrap:wrap;}
   /* --- v2 menu: Color Mood/Visual Style and Mode/Difficulty
      used to all sit open at once — 13 shape buttons plus everything else
      made the panel a scroll. Now they're two tabs; only the sub-picker
      that's actually relevant (Difficulty) shows itself. --- */
-  .tabbar{display:flex;gap:5px;margin-top:4px;}
-  .tabbtn{flex:1;padding:7px 6px;border:1px solid rgba(0,255,242,0.65);border-radius:3px;
-    background:rgba(0,255,242,0.08);color:#dcfffb;font-size:10px;font-weight:700;
-    letter-spacing:0.6px;text-transform:uppercase;font-family:inherit;cursor:pointer;
-    text-shadow:0 0 6px rgba(0,255,242,0.45);box-shadow:0 0 7px rgba(0,255,242,0.18);
-    transition:all 0.15s ease;}
-  .tabbtn:hover{background:rgba(0,255,242,0.2);border-color:var(--cyan);box-shadow:0 0 12px rgba(0,255,242,0.6);}
-  /* Every active control now throws the same light. Visuals/Curtains already
-     had it via drop-shadow (box-shadow gets clipped by their clip-path); the
-     tabs and swatches were flat, so "which one is on" needed reading rather
-     than glancing. Same cyan-into-magenta falloff on all three. */
-  .tabbtn.active{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;
-    border-color:transparent;text-shadow:none;
-    box-shadow:0 0 12px rgba(0,255,242,0.9), 0 0 28px rgba(255,43,214,0.6);}
+  .tabbar{display:flex;gap:3px;margin-top:6px;padding:3px;border-radius:11px;background:rgba(0,0,0,0.3);}
+  .tabbtn{flex:1;padding:7px 6px;border:1px solid transparent;border-radius:8px;
+    background:none;color:var(--mute);font-size:12px;font-weight:600;
+    font-family:inherit;cursor:pointer;transition:background 0.15s ease, color 0.15s ease;}
+  .tabbtn:hover{color:#fff;}
+  /* Every control that is on wears the same thing: a wash of the room's colour
+     and an edge of it, white words. "Which one is on" is a glance. */
+  .tabbtn.active{background:var(--on);border-color:var(--on-line);color:#fff;}
   .tabpane{display:none;}
   .tabpane.active{display:block;}
-  .tabpane label:first-child{margin-top:8px;}
+  .tabpane label:first-child{margin-top:10px;}
   .tech-btn{position:relative;}
-  .tech-btn::before,.tech-btn::after{content:'';position:absolute;width:6px;height:6px;
-    border-top:1.5px solid var(--mag);border-left:1.5px solid var(--mag);top:-3px;left:-3px;
-    opacity:0.6;filter:drop-shadow(0 0 3px var(--mag));transition:opacity 0.15s ease;}
-  .tech-btn::after{top:auto;left:auto;bottom:-3px;right:-3px;border-top:none;border-left:none;
-    border-bottom:1.5px solid var(--mag);border-right:1.5px solid var(--mag);}
-  .tech-btn:hover::before,.tech-btn:hover::after,.tech-btn.active::before,.tech-btn.active::after{opacity:1;}
-  /* Each swatch glows in its own colour (its color is its first hue, set
-     from script), a row of little neon tiles; the chosen one burns brighter. */
-  .theme-btn{width:24px;height:24px;border-radius:3px;border:1.5px solid rgba(255,255,255,0.45);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.3), 0 0 8px currentColor;
+  /* Each swatch is its own two colours (set from script); the chosen one
+     wears a white ring. */
+  .theme-btn{width:24px;height:24px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.3);
     cursor:pointer;transition:transform 0.15s ease, box-shadow 0.15s ease;}
-  .theme-btn:hover{transform:scale(1.1);box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), 0 0 12px 1px currentColor;}
+  .theme-btn:hover{transform:scale(1.1);}
   /* the Cover swatch is the album art itself; without one, a quiet ♫ */
-  .cover-btn{background:rgba(0,255,242,0.1) center/cover no-repeat;display:flex;align-items:center;justify-content:center;
-    font-size:12px;color:#dcfffb;box-sizing:border-box;}
+  .cover-btn{background:var(--fill) center/cover no-repeat;display:flex;align-items:center;justify-content:center;
+    font-size:12px;color:var(--ink);box-sizing:border-box;}
   .theme-btn:active{transform:scale(0.96);}
-  .theme-btn.active{border-color:#fff;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),
-               0 0 10px 2px currentColor, 0 0 26px 4px currentColor;}
-  .shape-btn{min-width:0;flex:1 1 40%;padding:6px 7px;border:1px solid rgba(0,255,242,0.7);
-    background:linear-gradient(180deg, rgba(0,255,242,0.18), rgba(0,255,242,0.04));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.15), inset 0 0 12px rgba(0,255,242,0.1), 0 2px 4px rgba(0,0,0,0.45);
-    color:#e8fffd;font-size:10px;letter-spacing:0.5px;text-shadow:0 0 7px rgba(0,255,242,0.6);
-    text-align:center;text-transform:uppercase;font-family:inherit;cursor:pointer;transition:all 0.15s ease;
-    clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);}
-  /* Neon hover glow: box-shadow gets clipped away by the clip-path corners,
-     so the glow is a filter drop-shadow — it hugs the angled shape itself,
-     and lights up the corner brackets too. */
-  .shape-btn:hover{background:linear-gradient(180deg, rgba(0,255,242,0.3), rgba(0,255,242,0.1));
-    border-color:var(--cyan);transform:translateY(-1px);color:#fff;
-    text-shadow:0 0 8px rgba(0,255,242,0.95);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.15);
-    filter:drop-shadow(0 0 6px rgba(0,255,242,0.65));}
-  .shape-btn:active{transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(0,0,0,0.5);
-    filter:drop-shadow(0 0 5px rgba(0,255,242,0.6));}
-  .shape-btn.active{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;
-    border-color:transparent;font-weight:700;text-shadow:none;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4);
-    filter:drop-shadow(0 0 7px rgba(0,255,242,0.9)) drop-shadow(0 0 16px rgba(255,43,214,0.6));}
-  /* Visual Style is the one list long enough to eat the panel: thirteen
-     entries two-per-row is seven rows of chrome before anything else gets a
-     look in. It scrolls in place instead. It's also a real 2-column grid, so
-     the odd one out (Lurena, last) keeps its half-width cell rather than
-     stretching across the whole row the way a lone flex child does. */
+  .theme-btn.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.28), 0 0 12px -2px currentColor;}
+  .shape-btn{min-width:0;flex:1 1 40%;padding:7px 6px;border:1px solid var(--line);border-radius:9px;
+    background:var(--fill);color:var(--ink);font-size:12px;font-weight:500;
+    text-align:center;font-family:inherit;cursor:pointer;transition:background 0.15s ease, border-color 0.15s ease;}
+  .shape-btn:hover{background:var(--fill-2);color:#fff;}
+  .shape-btn:active{transform:translateY(1px);}
+  .shape-btn.active{background:var(--on);border-color:var(--on-line);color:#fff;}
+  /* Visual Style is the one list long enough to eat the panel, so it scrolls
+     in place. It is a real 2-column grid, in three groups, each under its own
+     small heading: the sky first (Storms and Music Orbit are the first row),
+     then the rooms, then the fireworks. */
   #shapes{display:grid;grid-template-columns:1fr 1fr;gap:5px;
-    max-height:220px;overflow-y:auto;overscroll-behavior:contain;padding-right:4px;
-    scrollbar-width:thin;scrollbar-color:rgba(0,255,242,0.55) rgba(0,255,242,0.08);}
+    max-height:198px;overflow-y:auto;overscroll-behavior:contain;padding-right:4px;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) rgba(255,255,255,0.06);}
   #shapes .shape-btn{flex:none;min-width:0;}
+  #shapes .shape-group{grid-column:1 / -1;font-size:11px;font-weight:600;color:var(--mute);margin:7px 0 0 2px;}
+  #shapes .shape-group:first-child{margin-top:0;}
+  #shapes .shape-btn.wide{grid-column:1 / -1;}   /* the odd one out at the end of a group takes the whole row */
   #shapes::-webkit-scrollbar{width:6px;}
-  #shapes::-webkit-scrollbar-track{background:rgba(0,255,242,0.08);border-radius:3px;}
-  #shapes::-webkit-scrollbar-thumb{background:rgba(0,255,242,0.55);border-radius:3px;}
-  #shapes::-webkit-scrollbar-thumb:hover{background:rgba(0,255,242,0.85);}
-  input[type=range]{width:100%;accent-color:var(--mag);}
+  #shapes::-webkit-scrollbar-track{background:rgba(255,255,255,0.06);border-radius:3px;}
+  #shapes::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.3);border-radius:3px;}
+  #shapes::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.5);}
+  input[type=range]{width:100%;accent-color:rgb(var(--room));}
   #vu{margin-top:9px;display:flex;flex-direction:column;gap:4px;}
   .vu-row{display:flex;align-items:center;gap:8px;}
-  .vu-label{font-size:9px;letter-spacing:1px;color:#4dfff2;width:30px;flex:none;text-shadow:0 0 6px rgba(0,255,242,0.5);}
-  .vu-track{flex:1;height:7px;background:rgba(0,255,242,0.1);border-radius:4px;
-    box-shadow:inset 0 0 0 1px rgba(0,255,242,0.25);position:relative;overflow:hidden;}
+  .vu-label{font-size:10px;color:var(--mute);width:34px;flex:none;}
+  .vu-track{flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:4px;position:relative;overflow:hidden;}
   /* The meters move by transform, never by width or left: a width is a
      layout, and three of them every frame with the panel open cost the
      scene a step in Safari. A scaled fill and a slid tick are composited,
      and the ramp of colour sits across the fill exactly as it did. */
   .vu-fill{position:absolute;left:0;top:0;bottom:0;width:100%;border-radius:4px;
-    background:linear-gradient(90deg,var(--cyan),var(--mag));box-shadow:0 0 8px rgba(0,255,242,0.85), 0 0 16px rgba(255,43,214,0.6);
+    background:linear-gradient(90deg,rgba(var(--room),0.5),rgb(var(--room)));
     transform:scaleX(0);transform-origin:left center;transition:transform 0.08s linear;will-change:transform;}
   /* Peak-hold. The fill answers the signal instantly, which means a transient
      is gone before you've seen it. This tick jumps to each new peak and then
@@ -178,38 +135,28 @@
      element is the track's width and slides by a share of itself; the tick
      is its left edge. */
   .vu-peak{position:absolute;top:0;bottom:0;left:0;right:0;opacity:0;pointer-events:none;will-change:transform;}
-  .vu-peak::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:1px;
-    background:#fff;box-shadow:0 0 5px #fff, 0 0 10px var(--cyan);}
-  .vu-val{width:24px;flex:none;text-align:right;font-size:9px;color:#c6fffa;
-    letter-spacing:0.3px;font-variant-numeric:tabular-nums;}
-  #bpmVal{font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;
-    text-shadow:0 0 8px rgba(255,43,214,0.95), 0 0 18px rgba(255,43,214,0.5);}
-  /* These are clipped at the corners too, so their glow is cast inward and
-     the lettering itself carries the light. */
-  #playBtn,#recBtn,#recFullBtn{margin-top:10px;width:100%;padding:9px;border:1px solid var(--cyan);
-    background:linear-gradient(180deg, rgba(0,255,242,0.28), rgba(0,255,242,0.06));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.2), inset 0 0 16px rgba(0,255,242,0.28), 0 3px 6px rgba(0,0,0,0.5);
-    color:#fff;font-size:11px;font-weight:700;letter-spacing:1.4px;
-    text-shadow:0 0 8px rgba(0,255,242,0.9), 0 0 18px rgba(0,255,242,0.45);
-    text-transform:uppercase;font-family:inherit;cursor:pointer;transition:all 0.15s ease;
-    clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
-  #playBtn:hover:not(:disabled),#recBtn:hover:not(:disabled),#recFullBtn:hover:not(:disabled){background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;
-    text-shadow:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), inset 0 0 18px rgba(255,255,255,0.25);}
-  #playBtn:active:not(:disabled),#recBtn:active:not(:disabled),#recFullBtn:active:not(:disabled){transform:translateY(1px);box-shadow:inset 0 2px 6px rgba(0,0,0,0.45);}
-  #playBtn:disabled,#recBtn:disabled,#recFullBtn:disabled{opacity:0.3;cursor:not-allowed;box-shadow:none;}
-  #recBtn,#recFullBtn{margin-top:0;flex:1;width:auto;min-width:0;padding:7px 2px;font-size:9px;letter-spacing:0.6px;white-space:nowrap;}
+  .vu-peak::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:1px;background:#fff;}
+  .vu-val{width:24px;flex:none;text-align:right;font-size:10px;color:var(--mute);font-variant-numeric:tabular-nums;}
+  #bpmVal{font-size:12px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
+  #playBtn,#recBtn,#recFullBtn{margin-top:10px;width:100%;padding:9px;border:1px solid var(--line);border-radius:10px;
+    background:var(--fill);color:#fff;font-size:13px;font-weight:600;
+    font-family:inherit;cursor:pointer;transition:background 0.15s ease;}
+  #playBtn{background:var(--on);border-color:var(--on-line);}   /* the one main button */
+  #recBtn:hover:not(:disabled),#recFullBtn:hover:not(:disabled){background:var(--fill-2);}
+  #playBtn:hover:not(:disabled){background:rgba(var(--room),0.38);}
+  #playBtn:active:not(:disabled),#recBtn:active:not(:disabled),#recFullBtn:active:not(:disabled){transform:translateY(1px);}
+  #playBtn:disabled,#recBtn:disabled,#recFullBtn:disabled{opacity:0.35;cursor:not-allowed;}
+  #recBtn,#recFullBtn{margin-top:0;flex:1;width:auto;min-width:0;padding:7px 2px;font-size:11px;white-space:nowrap;}
   /* While it's rolling the button stops advertising itself and just reports. */
-  #recLenBtn{font-size:9px;letter-spacing:0.4px;}
-  #recLenBtn:disabled{opacity:0.3;cursor:not-allowed;}
-  #recBtn.rolling,#recFullBtn.rolling{border-color:var(--mag);color:#fff;
-    background:linear-gradient(180deg, rgba(255,43,214,0.3), rgba(255,43,214,0.08));
-    box-shadow:inset 0 0 18px rgba(255,43,214,0.5);text-shadow:0 0 8px rgba(255,43,214,0.95), 0 0 18px rgba(255,43,214,0.5);
+  #recLenBtn{font-size:11px;}
+  #recLenBtn:disabled{opacity:0.35;cursor:not-allowed;}
+  #recBtn.rolling,#recFullBtn.rolling{border-color:var(--on-line);color:#fff;background:var(--on);
     animation:recpulse 1.6s ease-in-out infinite;}
-  #recBtn.rolling:hover,#recFullBtn.rolling:hover{background:linear-gradient(180deg, rgba(255,43,214,0.4), rgba(255,43,214,0.12));color:#fff;text-shadow:none;}
+  #recBtn.rolling:hover,#recFullBtn.rolling:hover{background:rgba(var(--room),0.38);}
   @keyframes recpulse{0%,100%{opacity:1;}50%{opacity:0.72;}}
-  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff2bd6;
-    margin-right:8px;box-shadow:0 0 6px #ff2bd6, 0 0 14px #ff2bd6;vertical-align:middle;}
-  .dot.live{background:#39ff14;box-shadow:0 0 8px #39ff14, 0 0 16px #39ff14;animation:pulse 1s infinite;}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.55);
+    margin-right:8px;vertical-align:middle;}
+  .dot.live{background:var(--live);animation:pulse 1s infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
   /* Help: a card in the middle of the screen, over a dim scrim; a tap
      outside it, the ×, Esc or ? closes it. */
@@ -217,18 +164,17 @@
   #hintScrim.on{display:block;}
   #hint{display:none;position:fixed;z-index:41;left:50%;top:50%;transform:translate(-50%,-50%);
     width:min(460px,calc(100vw - 32px));max-height:calc(100% - 48px);overflow:auto;box-sizing:border-box;
-    font-size:12px;color:#b9d3d8;line-height:1.6;letter-spacing:0.2px;padding:18px 18px 14px;border-radius:10px;
-    background:linear-gradient(160deg, rgba(6,14,22,0.97), rgba(12,4,22,0.97));
-    border:1px solid rgba(0,255,242,0.35);box-shadow:0 0 40px rgba(0,255,242,0.14),0 20px 60px rgba(0,0,0,0.6);}
+    font-size:13px;color:rgba(238,236,246,0.82);line-height:1.6;padding:18px 18px 14px;
+    background:rgba(14,13,22,0.94);}
   #hint.on{display:block;}
-  #hint h3{margin:0 0 10px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#fff;}
+  #hint h3{margin:0 0 10px;font-size:15px;color:#fff;}
   #hint p{margin:0 0 10px;}
   #hint .keys{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:4px 0 2px;align-items:baseline;}
-  #hint kbd{font-family:inherit;font-size:11px;color:#eafffe;background:rgba(0,255,242,0.10);border:1px solid rgba(0,255,242,0.3);
-    border-radius:4px;padding:1px 6px;white-space:nowrap;}
-  #hintClose{position:absolute;top:8px;right:8px;width:36px;height:36px;border:0;background:none;color:#9fe4ea;
-    font-size:20px;line-height:1;cursor:pointer;border-radius:6px;font-family:inherit;}
-  #hintClose:hover{color:#fff;background:rgba(0,255,242,0.12);}
+  #hint kbd{font-family:inherit;font-size:12px;color:#fff;background:var(--fill);border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;white-space:nowrap;}
+  #hintClose{position:absolute;top:8px;right:8px;width:36px;height:36px;border:0;background:none;color:var(--mute);
+    font-size:20px;line-height:1;cursor:pointer;border-radius:8px;font-family:inherit;}
+  #hintClose:hover{color:#fff;background:var(--fill-2);}
   /* --- Title card: the song's name comes up like a neon sign --- */
   #titleCard{position:fixed;left:0;right:0;bottom:9%;z-index:7;text-align:center;   /* above the cords, the water and the veils */
     pointer-events:none;opacity:0;transition:opacity 1.5s ease;
@@ -236,7 +182,8 @@
   #titleCard img{display:block;width:76px;height:76px;object-fit:cover;margin:0 auto 12px;border-radius:6px;
     box-shadow:0 6px 24px rgba(0,0,0,0.6), 0 0 22px rgba(var(--tc-glow),0.8), 0 0 50px rgba(var(--tc-glow),0.45);}
   #titleCard img[hidden]{display:none;}
-  #titleCard .tc-sub{font-size:11px;letter-spacing:5px;color:#fff;
+  #titleCard .tc-sub{font-family:'Consolas','Courier New',monospace;   /* its own lettering, as it always was: the page's changed, the sign's did not */
+    font-size:11px;letter-spacing:5px;color:#fff;
     text-transform:uppercase;margin-bottom:7px;
     text-shadow:0 0 6px rgba(var(--tc-glow),1), 0 0 16px rgba(var(--tc-glow),0.8), 0 1px 3px rgba(0,0,0,0.8), 0 2px 14px rgba(0,0,0,0.7);}
   /* White-hot letters in a halo of the room's colour, wide and soft to tight
@@ -311,231 +258,202 @@
   /* --- Tap along: time a song's words by tapping as each line begins --- */
   #tapSheet{position:fixed;left:0;right:0;bottom:7%;z-index:12;display:flex;justify-content:center;pointer-events:none;padding:0 16px;}
   #tapSheet[hidden]{display:none;}
-  #tapSheet .ts-card{pointer-events:auto;width:min(560px,100%);box-sizing:border-box;padding:14px 16px;color:#dcfffb;
-    background:linear-gradient(160deg, rgba(4,12,22,0.9), rgba(14,3,24,0.9));border:1px solid rgba(0,255,242,0.8);
-    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-    box-shadow:0 10px 40px rgba(0,0,0,0.5), 0 0 24px rgba(0,255,242,0.35), 0 0 60px rgba(255,43,214,0.2), inset 0 0 22px rgba(0,255,242,0.12);}
-  .ts-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;margin-bottom:8px;
-    text-shadow:0 0 6px var(--cyan), 0 0 16px rgba(0,255,242,0.6);}
-  .ts-head button{background:none;border:none;color:#dcfffb;font-size:16px;cursor:pointer;padding:0 2px;}
-  .ts-help{font-size:11px;line-height:1.55;color:#b4dde2;margin:0 0 8px;}
-  .ts-help b{color:#fff;font-weight:700;text-shadow:0 0 6px rgba(0,255,242,0.6);}
-  #tsText{width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(0,255,242,0.5);color:#fff;
+  #tapSheet .ts-card{pointer-events:auto;width:min(560px,100%);box-sizing:border-box;padding:14px 16px;}
+  .ts-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700;color:#fff;margin-bottom:8px;}
+  .ts-head button{background:none;border:none;color:var(--mute);font-size:18px;cursor:pointer;padding:0 2px;}
+  .ts-help{font-size:12px;line-height:1.55;color:rgba(238,236,246,0.8);margin:0 0 8px;}
+  .ts-help b{color:#fff;font-weight:700;}
+  #tsText{width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid var(--line);border-radius:9px;color:#fff;
     font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.5;padding:8px;resize:vertical;}
   .ts-row{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:10px;flex-wrap:wrap;}
-  .ts-note{flex:1;font-size:10px;color:#ffb3ec;text-shadow:0 0 6px rgba(255,43,214,0.6);}
-  .ts-btn{border:1px solid rgba(0,255,242,0.8);background:linear-gradient(180deg, rgba(0,255,242,0.24), rgba(0,255,242,0.06));
-    color:#fff;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;cursor:pointer;
-    text-shadow:0 0 8px rgba(0,255,242,0.8);box-shadow:0 0 8px rgba(0,255,242,0.3);}
-  .ts-btn:hover{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;text-shadow:none;
-    box-shadow:0 0 12px rgba(0,255,242,0.85), 0 0 26px rgba(255,43,214,0.5);}
-  .ts-btn.small{font-size:9px;padding:8px 10px;}
-  .ts-count{font-size:10px;letter-spacing:1.5px;color:#4dfff2;text-transform:uppercase;text-shadow:0 0 7px rgba(0,255,242,0.55);}
-  .ts-prev{font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#8f9db4;margin-top:8px;min-height:18px;}
-  .ts-next{font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#fff;margin-top:4px;min-height:30px;
-    text-shadow:0 0 10px rgba(0,255,242,0.8), 0 0 24px rgba(0,255,242,0.4);}
+  .ts-note{flex:1;font-size:11px;color:#e6d2ff;}
+  .ts-btn{border:1px solid var(--line);border-radius:9px;background:var(--fill);
+    color:#fff;font-family:inherit;font-size:12px;font-weight:600;padding:8px 14px;cursor:pointer;
+    transition:background 0.15s ease;}
+  .ts-btn:hover{background:var(--fill-2);}
+  .ts-btn.small{font-size:11px;padding:8px 10px;}
+  .ts-count{font-size:11px;color:var(--mute);}
+  .ts-prev{font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#9a9fb4;margin-top:8px;min-height:18px;}
+  .ts-next{font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#fff;margin-top:4px;min-height:30px;}
   #lyricsNudge{position:fixed;left:0;right:0;bottom:18%;z-index:6;text-align:center;pointer-events:none;
-    opacity:0;transition:opacity 0.4s ease;font-size:11px;letter-spacing:3px;text-transform:uppercase;
-    color:#fff;text-shadow:0 0 8px var(--cyan), 0 0 18px rgba(0,255,242,0.6), 0 1px 6px rgba(0,0,0,0.85);}
+    opacity:0;transition:opacity 0.4s ease;font-size:13px;font-weight:600;
+    color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.6);}
   #lyricsNudge.on{opacity:1;}
   /* A short note from the studio itself (keeping up: the Picture going Soft). */
   #note{position:fixed;left:0;right:0;bottom:6%;z-index:6;text-align:center;pointer-events:none;
-    font-size:11px;letter-spacing:1.2px;color:#fff;text-shadow:0 0 8px var(--cyan), 0 0 18px rgba(0,255,242,0.5), 0 1px 3px rgba(0,0,0,0.8);
+    font-size:12px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.85), 0 0 12px rgba(0,0,0,0.6);
     opacity:0;transition:opacity 0.5s ease;}
   #note.on{opacity:1;}
   @media (prefers-reduced-motion: reduce){
     .lyr-line{transition:opacity 0.5s ease;}   /* lines change in place, no rolling (and no easing of the halo: it would repaint every frame) */
     .dot.live,#recBtn.rolling,#recFullBtn.rolling{animation:none;}    /* no blinking dots or pulsing buttons */
   }
-  /* --- SDFJKL play mode: score HUD + end-of-song summary. Neon signage: the
-     score burns cyan, the combo HEATS UP as it climbs (cyan → gold → orange →
-     white-hot pink, growing as it goes), the verdict flashes in its own
-     colour, and the summary is a lit sign with a coloured rank letter. --- */
+  /* --- Play mode: score HUD + end-of-song summary. White numbers in a soft
+     halo of the room's colour; the combo warms as it climbs (white → gold →
+     amber → pink, growing as it goes), the verdict shows in its own colour,
+     and the summary is a glass card with a coloured rank letter. --- */
   #scoreHud{display:none;position:fixed;top:14px;right:16px;z-index:10;text-align:right;pointer-events:none;}
   /* Shadow blurs stay modest: the HUD repaints on every hit, and a wide blur
-     is a CPU raster on the phone each time. */
-  #scoreHud .scr{font-size:40px;font-weight:800;letter-spacing:2px;line-height:1.1;color:#f4fffe;
+     is a CPU raster on the phone each time. The digits are tabular: every
+     one the same width, so the score does not jiggle as it counts. */
+  #scoreHud .scr{font-size:40px;font-weight:700;line-height:1.1;color:#fff;
+    font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+    text-shadow:0 1px 3px rgba(0,0,0,0.7), 0 0 16px rgba(var(--room),0.6);}
+  #scoreHud .cmb{font-size:14px;font-weight:700;color:#fff;min-height:18px;margin-top:2px;
     font-variant-numeric:tabular-nums;
-    text-shadow:0 0 5px #00fff2, 0 0 16px rgba(0,255,242,0.8);}
-  #scoreHud .cmb{font-size:14px;font-weight:700;letter-spacing:1.5px;color:#9dfffb;min-height:18px;margin-top:2px;
-    text-shadow:0 0 8px rgba(0,255,242,0.9);
+    text-shadow:0 1px 3px rgba(0,0,0,0.7);
     transition:color 0.3s ease, text-shadow 0.3s ease, font-size 0.3s ease;}
-  #scoreHud .cmb[data-heat="1"]{color:#ffe14d;font-size:17px;
-    text-shadow:0 0 8px #ffd60a, 0 0 18px rgba(255,214,10,0.6);}
-  #scoreHud .cmb[data-heat="2"]{color:#ffb06a;font-size:20px;
-    text-shadow:0 0 8px #ff6a1a, 0 0 20px rgba(255,106,26,0.7);}
+  #scoreHud .cmb[data-heat="1"]{color:#ffe07a;font-size:17px;
+    text-shadow:0 1px 3px rgba(0,0,0,0.7), 0 0 14px rgba(255,214,90,0.5);}
+  #scoreHud .cmb[data-heat="2"]{color:#ffc27a;font-size:20px;
+    text-shadow:0 1px 3px rgba(0,0,0,0.7), 0 0 16px rgba(255,176,87,0.6);}
   #scoreHud .cmb[data-heat="3"]{color:#fff;font-size:24px;
-    text-shadow:0 0 6px #ff2bd6, 0 0 16px #ff2bd6, 0 0 34px rgba(255,43,214,0.6);}
-  #scoreHud .bst{font-size:10px;font-weight:700;letter-spacing:1.5px;color:#7fb3bd;min-height:13px;}
-  #scoreHud .jdg{font-size:15px;font-weight:800;letter-spacing:3px;min-height:18px;margin-top:3px;}
+    text-shadow:0 0 6px #f29be0, 0 0 18px rgba(242,155,224,0.7);}
+  #scoreHud .bst{font-size:11px;font-weight:600;color:var(--mute);min-height:13px;text-shadow:0 1px 3px rgba(0,0,0,0.7);}
+  #scoreHud .jdg{font-size:15px;font-weight:700;min-height:18px;margin-top:3px;}
   /* pause and restart for a finger or a mouse (Esc and R on a keyboard) */
   #scoreHud .ctl{display:flex;gap:6px;justify-content:flex-end;margin-top:6px;pointer-events:auto;}
-  #scoreHud .ctl button{width:34px;height:28px;padding:0;border:1px solid rgba(0,255,242,0.6);border-radius:2px;
-    background:rgba(4,8,16,0.6);color:#bffffb;font-family:inherit;font-size:13px;cursor:pointer;}
-  #scoreHud .ctl button:hover{background:rgba(0,255,242,0.25);color:#fff;}
+  #scoreHud .ctl button{width:34px;height:28px;padding:0;border:1px solid var(--line);border-radius:8px;
+    background:rgba(14,13,22,0.6);color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer;}
+  #scoreHud .ctl button:hover{background:rgba(40,38,58,0.8);color:#fff;}
   /* Paused: a small sign over the lanes. Only the card takes clicks, so the
      panel beside it (difficulty, timing, mode) stays usable. */
   #gamePause{display:none;position:fixed;inset:0;z-index:9;align-items:center;justify-content:center;pointer-events:none;}
   #gamePause.on{display:flex;}
-  #gamePause .card{pointer-events:auto;padding:20px 30px;text-align:center;border-radius:8px;border:1px solid rgba(0,255,242,0.7);
-    background:linear-gradient(165deg, rgba(4,10,20,0.95), rgba(14,3,24,0.95));
-    box-shadow:0 0 18px rgba(0,255,242,0.45), 0 0 60px rgba(255,43,214,0.3);}
-  #gamePause h3{margin:0 0 14px;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#fff;
-    text-shadow:0 0 6px var(--cyan), 0 0 14px var(--cyan);}
+  #gamePause .card{pointer-events:auto;padding:20px 28px;text-align:center;}
+  #gamePause h3{margin:0 0 14px;font-size:16px;color:#fff;}
   #gamePause .gp-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
   /* Timing row (Play mode): the offset, its two nudges and the tap test */
   #calRow{gap:5px;}
   #calRow .skip-btn{height:26px;width:28px;}
   /* Stems line (Play mode): which instruments this song has been split into */
-  #stemNote{font-size:10px;color:#b8dbe0;letter-spacing:0.4px;line-height:1.5;}
-  #calVal{flex:1;text-align:center;font-size:10px;letter-spacing:1px;color:#c6fffa;font-variant-numeric:tabular-nums;}
+  #stemNote{font-size:11px;color:rgba(238,236,246,0.78);line-height:1.5;}
+  #calVal{flex:1;text-align:center;font-size:11px;color:var(--ink);font-variant-numeric:tabular-nums;}
   #calSheet{position:fixed;left:0;right:0;bottom:7%;z-index:32;display:flex;justify-content:center;pointer-events:none;padding:0 16px;}
   #calSheet[hidden]{display:none;}
-  #calSheet .ts-card{pointer-events:auto;width:min(480px,100%);box-sizing:border-box;padding:14px 16px;color:#dcfffb;
-    background:linear-gradient(160deg, rgba(4,12,22,0.94), rgba(14,3,24,0.94));border:1px solid rgba(0,255,242,0.8);
-    box-shadow:0 10px 40px rgba(0,0,0,0.5), 0 0 24px rgba(0,255,242,0.35), 0 0 60px rgba(255,43,214,0.2);}
-  #calPad.hit{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;text-shadow:none;}
+  #calSheet .ts-card{pointer-events:auto;width:min(480px,100%);box-sizing:border-box;padding:14px 16px;}
+  #calPad.hit{background:rgba(var(--room),0.55);}
   #scoreHud .pop{animation:hudPop 0.22s cubic-bezier(0.2,1.6,0.4,1);transform-origin:right center;}   /* a quick kick on every hit, growing leftward */
   @keyframes hudPop{from{transform:scale(1.35);}to{transform:scale(1);}}
   @media (prefers-reduced-motion: reduce){ #scoreHud .pop{animation:none;} }
   #summary{display:none;position:fixed;inset:0;z-index:30;
-    background:radial-gradient(ellipse at 50% 45%, rgba(255,43,214,0.22), rgba(0,255,242,0.08) 40%, rgba(2,2,8,0.92) 72%);
+    background:radial-gradient(ellipse at 50% 45%, rgba(var(--room),0.16), rgba(2,2,8,0.9) 72%);
     align-items:center;justify-content:center;cursor:pointer;}
-  #summary .card{position:relative;padding:28px 48px 24px;text-align:center;color:#d8fffb;border-radius:8px;
-    border:1px solid transparent;
-    background:linear-gradient(165deg, rgba(4,10,20,0.97), rgba(14,3,24,0.97)) padding-box,
-               linear-gradient(135deg, #00fff2, #8a33ff 45%, #ff2bd6 75%, #ffd60a) border-box;
-    box-shadow:0 0 18px rgba(0,255,242,0.55), 0 0 60px rgba(255,43,214,0.45), 0 0 140px rgba(138,51,255,0.35),
-               inset 0 0 40px rgba(0,255,242,0.07);}
-  #summary h3{margin:0 0 10px;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#fff;
-    text-shadow:0 0 6px var(--cyan), 0 0 14px var(--cyan), 0 0 30px var(--mag);}
-  #summary .rank{font-size:64px;font-weight:900;line-height:1;letter-spacing:2px;margin:2px 0 6px;color:#fff;
-    text-shadow:0 0 10px currentColor, 0 0 30px currentColor, 0 0 70px currentColor;}
-  #summary .card[data-rank="S"] .rank{color:#ffd60a;}
-  #summary .card[data-rank="A"] .rank{color:#39ff14;}
-  #summary .card[data-rank="B"] .rank{color:#00fff2;}
-  #summary .card[data-rank="C"] .rank{color:#ff2bd6;}
-  #summary .card[data-rank="D"] .rank{color:#ff2050;}
-  #summary .big{font-size:44px;font-weight:800;color:#f4fffe;letter-spacing:2px;line-height:1.1;
-    text-shadow:0 0 6px #00fff2, 0 0 20px rgba(0,255,242,0.9), 0 0 50px rgba(0,255,242,0.5);margin-bottom:12px;}
-  #summary .line{font-size:11px;font-weight:700;letter-spacing:1.6px;color:#c9f6ff;margin:5px 0;text-transform:uppercase;
-    text-shadow:0 0 8px rgba(0,255,242,0.5);}
-  #summary .line .sp{color:#39ff14;text-shadow:0 0 8px #39ff14;}
-  #summary .line .sg{color:#00fff2;text-shadow:0 0 8px #00fff2;}
-  #summary .line .sm{color:#ff2050;text-shadow:0 0 8px #ff2050;}
-  #summary .line .sc{color:#ffd60a;text-shadow:0 0 8px #ffd60a;}
+  #summary .card{position:relative;padding:26px 44px 22px;text-align:center;}
+  #summary h3{margin:0 0 10px;font-size:15px;color:#fff;font-weight:600;}
+  #summary .rank{font-size:64px;font-weight:800;line-height:1;margin:2px 0 6px;color:#fff;
+    text-shadow:0 0 26px currentColor;}
+  #summary .card[data-rank="S"] .rank{color:#ffd866;}
+  #summary .card[data-rank="A"] .rank{color:#7df0b4;}
+  #summary .card[data-rank="B"] .rank{color:#7cc8ff;}
+  #summary .card[data-rank="C"] .rank{color:#f29be0;}
+  #summary .card[data-rank="D"] .rank{color:#b9a8ff;}   /* the lowest rank is a soft violet, never red */
+  #summary .big{font-size:44px;font-weight:700;color:#fff;line-height:1.1;
+    font-variant-numeric:tabular-nums;margin-bottom:12px;}
+  #summary .line{font-size:13px;font-weight:500;color:rgba(238,236,246,0.82);margin:5px 0;}
+  #summary .line .sp{color:#7df0b4;}
+  #summary .line .sg{color:#7cc8ff;}
+  #summary .line .sm{color:#b9a8ff;}
+  #summary .line .sc{color:#ffd866;}
   #confetti{position:fixed;inset:0;width:100%;height:100%;z-index:31;pointer-events:none;display:none;}
-  #summary .tip{font-size:9px;color:#7fb3bd;margin-top:14px;letter-spacing:1px;}
+  #summary .tip{font-size:11px;color:var(--mute);margin-top:14px;}
   /* --- Player: the queue, the transport, skip buttons, the two record
      buttons side by side. All of it stays hidden until there is a song (or a
      second song) for it to be about. --- */
   #queue{margin-top:8px;}
-  #queue .q-head{display:flex;align-items:center;justify-content:space-between;font-size:9px;
-    color:#4dfff2;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;margin-bottom:4px;text-shadow:0 0 7px rgba(0,255,242,0.55);}
-  #queueClear{background:none;border:none;padding:0;color:#9fdce0;font-family:inherit;font-size:9px;
-    letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
-  #queueClear:hover{color:#fff;text-shadow:0 0 6px var(--cyan);}
+  #queue .q-head{display:flex;align-items:center;justify-content:space-between;font-size:11px;
+    color:var(--mute);font-weight:600;margin-bottom:4px;}
+  #queueClear{background:none;border:none;padding:0;color:var(--mute);font-family:inherit;font-size:11px;cursor:pointer;}
+  #queueClear:hover{color:#fff;}
   #queueList{max-height:92px;overflow-y:auto;overscroll-behavior:contain;
-    scrollbar-width:thin;scrollbar-color:rgba(0,255,242,0.55) rgba(0,255,242,0.08);}
-  .q-item{font-size:10px;color:#b8dbe0;padding:3px 6px;border-left:2px solid transparent;cursor:pointer;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) rgba(255,255,255,0.06);}
+  .q-item{font-size:12px;color:rgba(238,236,246,0.78);padding:4px 6px;border-left:2px solid transparent;border-radius:0 7px 7px 0;cursor:pointer;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .q-item:hover{color:#fff;background:rgba(0,255,242,0.12);}
+  .q-item:hover{color:#fff;background:var(--fill);}
   .q-item{display:flex;align-items:center;gap:4px;}
   .q-item .q-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .q-gal{flex:none;width:18px;height:18px;margin:-3px 2px -3px 0;border-radius:50%;overflow:hidden;box-sizing:border-box;
-    border:1px solid rgba(159,220,224,0.22);}
-  .q-gal.has{border-color:rgba(159,220,224,0.5);box-shadow:0 0 5px rgba(140,170,255,0.45);}
+    border:1px solid rgba(255,255,255,0.2);}
+  .q-gal.has{border-color:rgba(255,255,255,0.45);}
   .q-gal img{display:none;width:100%;height:100%;}
   .q-gal.has img{display:block;}
-  .q-forget{flex:none;opacity:0;background:none;border:none;padding:0 2px;color:#9fdce0;font-family:inherit;
-    font-size:11px;line-height:1;cursor:pointer;transition:opacity 0.15s ease;}
+  .q-forget{flex:none;opacity:0;background:none;border:none;padding:0 2px;color:var(--mute);font-family:inherit;
+    font-size:12px;line-height:1;cursor:pointer;transition:opacity 0.15s ease;}
   .q-item:hover .q-forget,.q-forget:focus-visible{opacity:1;}
   .q-forget:hover{color:#fff;}
-  #queueNote{font-size:9px;color:#b8dbe0;letter-spacing:0.4px;margin-top:3px;min-height:0;}
+  #queueNote{font-size:10px;color:var(--mute);margin-top:3px;min-height:0;}
   #queueNote:empty{display:none;}
   .src-row{display:flex;gap:6px;margin:12px 0 5px;}
   .src-row .add-music{margin:0;}
   .src-row #addMusicBtn{flex:1;min-width:0;}
   .src-row #addMusicBtn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .src-row #micBtn{width:auto;flex:0 0 auto;padding-left:12px;padding-right:12px;white-space:nowrap;}
-  #micBtn .mic-dot{display:none;width:7px;height:7px;border-radius:50%;background:#ff3b5c;
-    box-shadow:0 0 8px #ff3b5c;animation:micPulse 1.2s ease-in-out infinite;}
-  #micBtn.live{border-style:solid;border-color:#ff3b5c;
-    background:linear-gradient(180deg,rgba(255,59,92,0.28),rgba(255,43,214,0.12));
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.15), inset 0 0 16px rgba(255,59,92,0.35);
-    text-shadow:0 0 8px rgba(255,59,92,0.9);}
+  /* The mic, live: the same soft green as the playing dot. (It was red.) */
+  #micBtn .mic-dot{display:none;width:7px;height:7px;border-radius:50%;background:var(--live);
+    animation:micPulse 1.2s ease-in-out infinite;}
+  #micBtn.live{border-style:solid;border-color:var(--live);background:rgba(125,240,180,0.14);color:#fff;}
   #micBtn.live .mic-dot{display:inline-block;}
   #micBtn.wait{opacity:0.7;cursor:progress;}
   @keyframes micPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.35;transform:scale(0.7);}}
   @media (prefers-reduced-motion: reduce){ #micBtn .mic-dot{animation:none;} }
-  #songNote{font-size:10px;color:#ffc9d6;letter-spacing:0.4px;margin-top:5px;line-height:1.4;}
-  .q-item.cur{color:#fff;border-left-color:var(--mag);background:rgba(255,43,214,0.16);
-    box-shadow:inset 0 0 14px rgba(255,43,214,0.2);text-shadow:0 0 6px rgba(255,43,214,0.7);}
+  #songNote{font-size:11px;color:#ecd9ff;margin-top:5px;line-height:1.4;}
+  .q-item.cur{color:#fff;border-left-color:rgb(var(--room));background:rgba(var(--room),0.18);}
   #transport{margin-top:9px;display:flex;flex-direction:column;gap:3px;}
   #transport[hidden]{display:none;}
   .tr-row{display:flex;align-items:center;gap:7px;}
-  .tr-time{font-size:9px;color:#a6fff6;width:28px;flex:none;font-variant-numeric:tabular-nums;}
+  .tr-time{font-size:10px;color:var(--mute);width:28px;flex:none;font-variant-numeric:tabular-nums;}
   .tr-time.end{text-align:right;}
   .tr-row input[type=range]{flex:1;min-width:0;height:14px;margin:0;}
   .tr-row input[type=range]:disabled{opacity:0.35;}
   .play-row{display:flex;gap:5px;align-items:stretch;margin-top:10px;}
   .play-row #playBtn{margin-top:0;flex:1;width:auto;}
-  /* The small square buttons have no clipped corners, so their glow can sit
-     outside them; the ones switched on burn cyan into magenta like the tabs. */
-  .skip-btn{flex:none;width:32px;padding:0;border:1px solid rgba(0,255,242,0.75);border-radius:2px;
-    background:rgba(0,255,242,0.1);color:#e4fffc;font-family:inherit;font-size:11px;cursor:pointer;
-    text-shadow:0 0 6px rgba(0,255,242,0.5);box-shadow:0 0 7px rgba(0,255,242,0.22);
-    transition:all 0.15s ease;}
-  .skip-btn:hover{background:rgba(0,255,242,0.25);color:#fff;border-color:var(--cyan);box-shadow:0 0 12px rgba(0,255,242,0.7);}
+  /* The small square buttons; the ones switched on wear the room's colour
+     like the tabs. */
+  .skip-btn{flex:none;width:32px;padding:0;border:1px solid var(--line);border-radius:8px;
+    background:var(--fill);color:var(--ink);font-family:inherit;font-size:12px;cursor:pointer;
+    transition:background 0.15s ease, border-color 0.15s ease;}
+  .skip-btn:hover{background:var(--fill-2);color:#fff;}
   .rec-row{display:flex;gap:5px;margin-top:6px;}
-  #buildStamp{margin-top:8px;font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#5f9aa3;text-align:right;}
+  #buildStamp{margin-top:8px;font-size:10px;color:rgba(238,236,246,0.42);text-align:right;}
   /* The lyrics picker rides under Add Music, a size smaller; its on/off
      switch only shows once the song has words. */
   .lyr-row{display:flex;gap:5px;margin-bottom:4px;}
-  .lyr-row .add-music{flex:1;min-width:0;margin:0;padding:7px 8px;font-size:9px;border-width:1px;
-    clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);}
+  .lyr-row .add-music{flex:1;min-width:0;margin:0;padding:7px 8px;font-size:11px;border-radius:9px;}
   .lyr-row .add-music span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .lyr-row .lyr-file{display:flex;align-items:center;justify-content:center;width:34px;margin:0;
-    font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:none;color:#9fe4ea;}
-  .lyr-row .lyr-tap{width:26px;font-size:11px;}
+    font-size:11px;font-weight:600;color:var(--ink);}
+  .lyr-row .lyr-tap{width:26px;font-size:12px;}
   /* The lyrics' timing, under the picker while words are showing: the [ ]
      keys, for fingers. */
-  #lyrTime{display:flex;align-items:center;gap:5px;margin-bottom:6px;font-size:9px;color:#6d8f96;
-    letter-spacing:0.8px;text-transform:uppercase;}
+  #lyrTime{display:flex;align-items:center;gap:5px;margin-bottom:6px;font-size:11px;color:var(--mute);}
   #lyrTime[hidden]{display:none;}
   #lyrTime .lt-lab{flex:none;}
-  #lyrTime button{flex:1;width:auto;padding:6px 0;margin:0;font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;}
-  #lyrShift{flex:none;min-width:52px;text-align:center;color:#eafffe;font-variant-numeric:tabular-nums;}
-  #lyricsToggle{width:38px;font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;}
+  #lyrTime button{flex:1;width:auto;padding:6px 0;margin:0;font-size:11px;font-weight:600;}
+  #lyrShift{flex:none;min-width:52px;text-align:center;color:#fff;font-variant-numeric:tabular-nums;}
+  #lyricsToggle{width:38px;font-size:11px;font-weight:600;}
   #lyricsToggle[hidden]{display:none;}
-  #lyricsToggle.on{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;border-color:transparent;
-    text-shadow:none;box-shadow:0 0 12px rgba(0,255,242,0.85), 0 0 24px rgba(255,43,214,0.5);}
+  /* The small switches that are on (lyrics, water, the mood effects, haze). */
+  #lyricsToggle.on,#waterBtn.on,.fx-btn.on,#bgHaze.on{background:var(--on);border-color:var(--on-line);color:#fff;}
   /* The Backdrop's picture: its picker rides under Visual Style while either
      kind of Curtains is the style, with a × to forget it; the credit sits in
      the corner while the picture shows. */
   #bgRow{margin-top:6px;margin-bottom:0;}
   #roomRow{margin-top:5px;margin-bottom:0;}
   #roomRow[hidden]{display:none;}
-  #waterBtn{flex:1;width:auto;font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:5px 0;}
-  #waterBtn.on{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;border-color:transparent;
-    text-shadow:none;box-shadow:0 0 12px rgba(0,255,242,0.85), 0 0 24px rgba(255,43,214,0.5);}
+  #waterBtn{flex:1;width:auto;font-size:11px;font-weight:600;padding:5px 0;}
   /* The mood effects — Disco, Smoke, Nostalgic — ride under the water switch
      while a kind of Curtains is the style; each is a toggle that stacks. */
   #fxRow{margin-top:5px;margin-bottom:0;}
   #fxRow[hidden]{display:none;}
-  .fx-btn{flex:1;width:auto;min-width:0;font-size:9px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;padding:5px 0;
+  .fx-btn{flex:1;width:auto;min-width:0;font-size:11px;font-weight:600;padding:5px 0;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .fx-btn[data-fx=nostalgic]{flex:1.15;}   /* the longest word of the three */
-  .fx-btn.on{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;border-color:transparent;
-    text-shadow:none;box-shadow:0 0 12px rgba(0,255,242,0.85), 0 0 24px rgba(255,43,214,0.5);}
   #bgRow[hidden],#bgClear[hidden]{display:none;}
   #bgClear{width:26px;font-size:13px;line-height:1;}
-  #bgHaze{width:42px;font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;}
+  #bgHaze{width:42px;font-size:11px;font-weight:600;}
   #bgHaze[hidden]{display:none;}
-  #bgHaze.on{background:linear-gradient(180deg,var(--cyan),var(--mag));color:#04040a;border-color:transparent;
-    text-shadow:none;box-shadow:0 0 12px rgba(0,255,242,0.85), 0 0 24px rgba(255,43,214,0.5);}
-  #bgCredit{position:fixed;right:12px;bottom:10px;z-index:6;pointer-events:none;font-size:9px;letter-spacing:0.6px;
-    color:rgba(255,255,255,0.65);text-shadow:0 1px 3px rgba(0,0,0,0.8), 0 0 8px rgba(0,255,242,0.4);opacity:0;transition:opacity 0.6s ease;}
+  #bgCredit{position:fixed;right:12px;bottom:10px;z-index:6;pointer-events:none;font-size:10px;
+    color:rgba(255,255,255,0.65);text-shadow:0 1px 3px rgba(0,0,0,0.8);opacity:0;transition:opacity 0.6s ease;}
   #bgCredit.on{opacity:1;}
   /* Nothing has moved for a few seconds and a song is playing: the pointer
      gets out of the picture. */
@@ -546,9 +464,8 @@
   #dropHint{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
     pointer-events:none;background:rgba(4,4,10,0.55);}
   body.dropping #dropHint{display:flex;}
-  #dropHint span{border:1.5px dashed rgba(0,255,242,0.9);padding:22px 34px;color:#fff;font-size:13px;
-    letter-spacing:4px;text-transform:uppercase;text-shadow:0 0 8px var(--cyan), 0 0 24px rgba(0,255,242,0.8), 0 0 48px rgba(255,43,214,0.5);
-    box-shadow:0 0 24px rgba(0,255,242,0.4), inset 0 0 24px rgba(0,255,242,0.15);}
+  #dropHint span{border:1.5px dashed rgba(255,255,255,0.6);border-radius:16px;padding:22px 34px;color:#fff;font-size:16px;
+    font-weight:600;background:var(--glass);}
   /* --- Fingers: on a touch screen every control gets about 44 px to land
      on. The small icon buttons keep their look and grow an invisible hit
      area; the rest simply stand taller. --- */
@@ -557,45 +474,77 @@
     #panelToggle,#helpToggle,#fsToggle{width:30px;height:30px;font-size:14px;position:relative;}
     #panelToggle::after,#helpToggle::after,#fsToggle::after{content:'';position:absolute;inset:-7px;}
     #panel h2{gap:12px;}
+    /* A phone's glass is nearly solid: a blur behind a tall panel is the
+       dearest thing a phone paints. */
+    #panel{background:rgba(14,13,22,0.88);-webkit-backdrop-filter:none;backdrop-filter:none;}
     /* Folded, on a touch screen: only the bolt and the tempo (a tap anywhere
        on the chip opens the panel, so its own + is left out), and after a few
        seconds it fades out of the picture altogether. A touch anywhere on
        the screen brings it back (see chipWake). */
-    #panel{transition:box-shadow 0.2s ease, border-color 0.2s ease, width 0.25s ease, padding 0.25s ease, opacity 0.9s ease;}
+    #panel{transition:border-color 0.3s ease, width 0.25s ease, padding 0.25s ease, opacity 0.9s ease;}
     #panel.min{padding:5px 9px;}
     #panel.min #panelToggle{display:none;}
     #panel.min.away{opacity:0;pointer-events:none;}
-    .tabbtn{min-height:42px;font-size:11px;}
-    .theme-btn{width:38px;height:38px;}
+    .tabbtn{min-height:42px;font-size:13px;}
+    .theme-btn{width:38px;height:38px;border-radius:11px;}
     .row{gap:7px;}
-    .shape-btn{min-height:42px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:4px;}
+    .shape-btn{min-height:42px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px;}
     #shapes .shape-btn{height:44px;}
     /* Every style on show. A list that scrolls inside the panel has no
-       scrollbar on a phone, so the styles past the sixth row (Storms and
-       Music Orbit among them) looked as if they were not there. The panel
-       scrolls as one piece instead. */
+       scrollbar on a phone, so the styles past the sixth row looked as if
+       they were not there. The panel scrolls as one piece instead. */
     #shapes{max-height:none;overflow:visible;padding-right:0;gap:6px;}
     .skip-btn{min-height:42px;}
     .skip-btn:not(.fx-btn):not(#waterBtn):not(#lyrTime button){min-width:42px;}
-    .fx-btn,#waterBtn{min-height:42px;font-size:10px;}
+    .fx-btn,#waterBtn{min-height:42px;font-size:12px;}
     .lyr-row .add-music,.add-music{min-height:44px;}
-    #lyrTime button{min-height:40px;font-size:10px;}
+    #lyrTime button{min-height:40px;font-size:12px;}
     #queueClear{padding:12px 10px;margin:-12px -10px;}
-    .q-item{min-height:40px;padding:0 0 0 6px;font-size:11px;}
+    .q-item{min-height:40px;padding:0 0 0 6px;font-size:13px;}
     .q-gal{width:30px;height:30px;margin:0 4px 0 0;}
     .q-forget{opacity:1;min-width:40px;min-height:40px;font-size:16px;}
     #queueList{max-height:170px;}
     #playBtn{min-height:46px;}
     #recBtn,#recFullBtn{min-height:42px;}
     input[type=range],.tr-row input[type=range]{height:32px;}
+    /* pause and restart in the corner: a full finger each */
+    #scoreHud .ctl button{width:44px;height:44px;font-size:16px;}
+    .ts-btn{min-height:44px;}
+    #calRow .skip-btn{height:auto;width:auto;}
   }
-  /* No hover on a touch screen: the hover lift and glow would stick after
-     a tap, so it stays off there. */
+  /* --- A phone held upright: the open panel keeps to about half the screen,
+     so the room (or the lanes) has the other half. Rows that held three or
+     four things side by side fold onto two lines; nothing gets smaller than
+     a finger. --- */
+  @media (pointer:coarse) and (max-width:520px){
+    #panel{box-sizing:border-box;width:50vw;min-width:188px;padding:11px;}
+    #panel.min{width:auto;min-width:0;}
+    #panel h2{gap:6px;font-size:13px;line-height:1.15;}
+    #panel h2 .ttl{min-width:0;}
+    #scoreHud .scr{font-size:32px;}
+    .src-row,.lyr-row,#lyrTime,#calRow,.rec-row,#fxRow{flex-wrap:wrap;}
+    .src-row #addMusicBtn,.lyr-row #lyricsBtn,.lyr-row #bgPick{flex:1 1 100%;}
+    .src-row #micBtn{flex:1 1 100%;}
+    .lyr-row .skip-btn{flex:1 1 0;}
+    #lyrTime .lt-lab{flex:1 1 100%;}
+    #calBtn{flex:1 1 100%;}
+    #recBtn{flex:1 1 0;}
+    #recLenBtn{flex:0 0 46px;}
+    #recFullBtn{flex:1 1 100%;}
+    #fxRow .fx-btn{flex:1 1 100%;}
+    .shape-btn{font-size:12px;line-height:1.15;padding:3px 4px;}
+    #shapes .shape-btn{height:auto;min-height:44px;}
+    .theme-btn{width:36px;height:36px;}
+    .row{gap:6px;}
+    .vu-label{width:32px;}
+  }
+  /* No hover on a touch screen: the hover wash would stick after a tap, so
+     it stays off there. */
   @media (hover:none){
-    .shape-btn:hover:not(.active){transform:none;filter:none;text-shadow:none;color:#b8ecf2;
-      background:linear-gradient(180deg, rgba(0,255,242,0.13), rgba(0,255,242,0.03));border-color:rgba(0,255,242,0.35);}
+    .shape-btn:hover:not(.active){background:var(--fill);color:var(--ink);}
+    .tabbtn:hover:not(.active){color:var(--mute);}
     .theme-btn:hover{transform:none;}
-    .q-item:hover:not(.cur){background:none;color:#9fb9c0;}
+    .q-item:hover:not(.cur){background:none;color:rgba(238,236,246,0.78);}
   }
 </style>
 </head>
@@ -604,7 +553,7 @@
   <h2 id="panelHead"><span class="bolt">⚡</span><span class="ttl">Sound Studio</span><span id="miniBpm"></span><button id="helpToggle" title="what is this? (?)">?</button><button id="fsToggle" title="fullscreen (f)" aria-label="fullscreen">⛶</button><button id="panelToggle" title="collapse (-)">–</button></h2>
   <div id="panelBody">
     <div class="src-row">
-      <label class="add-music tech-btn" id="addMusicBtn"><span id="addMusicLabel">＋ Add Music</span>
+      <label class="add-music tech-btn" id="addMusicBtn"><span id="addMusicLabel">＋ Add music</span>
         <input type="file" id="audioFile" accept="audio/*,.json,application/json" multiple hidden></label>
       <button class="add-music tech-btn" id="micBtn" title="live mic: the visuals react to the room or your voice (M)" aria-pressed="false"><span class="mic-dot"></span><span id="micLabel">🎤 Mic</span></button>
     </div>
@@ -616,74 +565,74 @@
            loadLyricsFiles instead. -->
       <label class="skip-btn lyr-file" title="use a .lrc file instead (the words with their timings)">.lrc<input type="file" id="lyricsFile" multiple hidden></label>
       <button id="tapOpen" class="skip-btn lyr-tap" title="tap along: time the words yourself" aria-label="tap along to time the lyrics">✎</button>
-      <button id="lyricsToggle" class="skip-btn" title="show or hide the lyrics (L)" aria-pressed="true" hidden>on</button>
+      <button id="lyricsToggle" class="skip-btn" title="show or hide the lyrics (L)" aria-pressed="true" hidden>On</button>
     </div>
-    <div id="lyrTime" hidden><span class="lt-lab">timing</span><button class="skip-btn" id="lyrSooner" title="lyrics sooner ([)" aria-label="lyrics sooner">− sooner</button><span id="lyrShift">0.00 s</span><button class="skip-btn" id="lyrLater" title="lyrics later (])" aria-label="lyrics later">later +</button></div>
+    <div id="lyrTime" hidden><span class="lt-lab">Timing</span><button class="skip-btn" id="lyrSooner" title="lyrics sooner ([)" aria-label="lyrics sooner">− Sooner</button><span id="lyrShift">0.00 s</span><button class="skip-btn" id="lyrLater" title="lyrics later (])" aria-label="lyrics later">Later +</button></div>
     <div id="queue" hidden>
-      <div class="q-head"><span id="queueCount"></span><button id="queueClear" title="keep only the song that is playing — the others are forgotten here too">clear</button></div>
+      <div class="q-head"><span id="queueCount"></span><button id="queueClear" title="keep only the song that is playing — the others are forgotten here too">Clear</button></div>
       <div id="queueList"></div>
       <div id="queueNote"></div>
     </div>
 
     <div class="tabbar" id="menuTabs">
-      <button class="tabbtn active" data-tab="visuals">🎨 Visuals</button>
-      <button class="tabbtn" data-tab="game">🎮 Game</button>
+      <button class="tabbtn active" data-tab="visuals">Visuals</button>
+      <button class="tabbtn" data-tab="game">Game</button>
     </div>
 
     <div class="tabpane active" data-tabpane="visuals">
-      <label>🎨 Color Mood</label>
+      <label>Color mood</label>
       <div class="row" id="themes"></div>
-      <label>🎆 Visual Style</label>
+      <label>Visual style</label>
       <div class="row" id="shapes"></div>
       <div class="lyr-row" id="bgRow" hidden>
         <label class="add-music" id="bgPick" title="a picture of your own behind these Curtains"><span id="bgLabel">🖼 Background image</span>
           <input type="file" id="bgFile" accept="image/*" hidden></label>
-        <button id="bgHaze" class="skip-btn" title="a small picture as a soft haze, or as it is" aria-pressed="true" hidden>haze</button>
+        <button id="bgHaze" class="skip-btn" title="a small picture as a soft haze, or as it is" aria-pressed="true" hidden>Haze</button>
         <button id="bgClear" class="skip-btn" title="forget this picture" aria-label="forget the background image" hidden>×</button>
       </div>
       <div class="lyr-row" id="roomRow" hidden>
-        <button id="waterBtn" class="skip-btn" title="a floor of still water under the cords, reflecting their light (W)" aria-pressed="true">💧 water</button>
+        <button id="waterBtn" class="skip-btn" title="a floor of still water under the cords, reflecting their light (W)" aria-pressed="true">💧 Water</button>
       </div>
       <div class="lyr-row" id="fxRow" hidden>
-        <button class="skip-btn fx-btn" data-fx="disco" title="light beams from the corners and mirror-ball glints, flashing on the kick (D)" aria-pressed="false">✦ disco</button>
-        <button class="skip-btn fx-btn" data-fx="smoke" title="a fog machine: shots from the sides on the beat, lit by the room's colour or the beams (S; ⇧S or a tap on the floor fires one)" aria-pressed="false">☁ smoke</button>
-        <button class="skip-btn fx-btn" data-fx="nostalgic" title="old film: warm faded colour, grain, a soft vignette, a light leak now and then (N)" aria-pressed="false">🎞 nostalgic</button>
+        <button class="skip-btn fx-btn" data-fx="disco" title="light beams from the corners and mirror-ball glints, flashing on the kick (D)" aria-pressed="false">✦ Disco</button>
+        <button class="skip-btn fx-btn" data-fx="smoke" title="a fog machine: shots from the sides on the beat, lit by the room's colour or the beams (S; ⇧S or a tap on the floor fires one)" aria-pressed="false">☁ Smoke</button>
+        <button class="skip-btn fx-btn" data-fx="nostalgic" title="old film: warm faded colour, grain, a soft vignette, a light leak now and then (N)" aria-pressed="false">🎞 Nostalgic</button>
       </div>
-      <div class="tr-row" id="orbitRow" hidden><span class="vu-label">DIM</span><input type="range" id="orbitWashBar" min="0" max="85" value="20" aria-label="how dark the solar system sits behind the words"><span class="vu-val" id="orbitWashVal">20</span></div>
-      <label>🖥️ Picture</label>
+      <div class="tr-row" id="orbitRow" hidden><span class="vu-label">Dim</span><input type="range" id="orbitWashBar" min="0" max="85" value="20" aria-label="how dark the solar system sits behind the words"><span class="vu-val" id="orbitWashVal">20</span></div>
+      <label>Picture</label>
       <div class="row" id="picture"></div>
-      <div class="tr-row" id="brightRow"><span class="vu-label">LIGHT</span><input type="range" id="brightBar" min="40" max="100" value="100" aria-label="brightness of the picture"><span class="vu-val" id="brightVal">100</span></div>
+      <div class="tr-row" id="brightRow"><span class="vu-label">Light</span><input type="range" id="brightBar" min="40" max="100" value="100" aria-label="brightness of the picture"><span class="vu-val" id="brightVal">100</span></div>
     </div>
 
     <div class="tabpane" data-tabpane="game">
-      <label>🎮 Mode</label>
+      <label>Mode</label>
       <div class="row" id="modes"></div>
       <div id="difficultySection" hidden>
-        <label>🥁 Instrument</label>
+        <label>Instrument</label>
         <div class="row" id="instrument"></div>
-        <label>🌶️ Difficulty</label>
+        <label>Difficulty</label>
         <div class="row" id="difficulty"></div>
-        <label>⏱ Timing</label>
+        <label>Timing</label>
         <div class="tr-row" id="calRow">
           <button id="calMinus" class="skip-btn" title="judge the notes 5 ms sooner (hits read early)" aria-label="timing 5 milliseconds sooner">−</button>
           <span id="calVal">0 ms</span>
           <button id="calPlus" class="skip-btn" title="judge the notes 5 ms later (hits read late)" aria-label="timing 5 milliseconds later">+</button>
           <button id="calBtn" class="ts-btn small" title="tap along to a click and the studio sets this for you">Tap test</button>
         </div>
-        <label>🎚 Stems</label>
+        <label>Stems</label>
         <div id="stemNote" title="a stem is one instrument alone, cut out of the song on your Mac (tools/stems.py)"></div>
       </div>
     </div>
 
     <div id="vu">
-      <div class="vu-row"><span class="vu-label">BASS</span><div class="vu-track"><div class="vu-fill" id="vuBass"></div><div class="vu-peak" id="pkBass"></div></div><span class="vu-val" id="valBass">0</span></div>
-      <div class="vu-row"><span class="vu-label">VOICE</span><div class="vu-track"><div class="vu-fill" id="vuVoice"></div><div class="vu-peak" id="pkVoice"></div></div><span class="vu-val" id="valVoice">0</span></div>
-      <div class="vu-row"><span class="vu-label">TREB</span><div class="vu-track"><div class="vu-fill" id="vuTreb"></div><div class="vu-peak" id="pkTreb"></div></div><span class="vu-val" id="valTreb">0</span></div>
+      <div class="vu-row"><span class="vu-label">Bass</span><div class="vu-track"><div class="vu-fill" id="vuBass"></div><div class="vu-peak" id="pkBass"></div></div><span class="vu-val" id="valBass">0</span></div>
+      <div class="vu-row"><span class="vu-label">Voice</span><div class="vu-track"><div class="vu-fill" id="vuVoice"></div><div class="vu-peak" id="pkVoice"></div></div><span class="vu-val" id="valVoice">0</span></div>
+      <div class="vu-row"><span class="vu-label">Treble</span><div class="vu-track"><div class="vu-fill" id="vuTreb"></div><div class="vu-peak" id="pkTreb"></div></div><span class="vu-val" id="valTreb">0</span></div>
       <div class="vu-row"><span class="vu-label">BPM</span><span id="bpmVal">--</span></div>
     </div>
     <div id="transport" hidden>
       <div class="tr-row"><span class="tr-time" id="trNow">0:00</span><input type="range" id="seekBar" min="0" max="1000" value="0" aria-label="position in the song"><span class="tr-time end" id="trLen">0:00</span></div>
-      <div class="tr-row"><span class="vu-label">VOL</span><input type="range" id="volBar" min="0" max="100" value="100" aria-label="volume"><span class="vu-val" id="volVal">100</span></div>
+      <div class="tr-row"><span class="vu-label">Vol</span><input type="range" id="volBar" min="0" max="100" value="100" aria-label="volume"><span class="vu-val" id="volVal">100</span></div>
     </div>
     <div class="play-row">
       <button id="prevBtn" class="skip-btn" title="previous song (,)" aria-label="previous song" hidden>⏮</button>
@@ -695,8 +644,8 @@
       <button id="recLenBtn" class="skip-btn" title="how long a clip is: 15, 20 or 30 seconds" aria-label="clip length">20s</button>
       <button id="recFullBtn" disabled title="start the song over and record all of it"><span id="recFullLabel">◉ Full song</span></button>
     </div>
-    <div id="buildStamp" data-built="2026-11-24T04:31:21Z" title="when this copy of the studio was last changed"></div>
-    <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. DIM in the panel sets how dark it sits behind the words.</p><p>💫 Song galaxy grows a spiral out of the song. It starts as a small glow in the dark; as the song plays, two arms wind outward from it, and where the song is now is the tip of each arm. Every kick adds a handful of stars there, a quiet verse leaves a thin blue stretch, and a chorus leaves a bright one with pale gold in it. By the last note the whole song is there as one galaxy, turning slowly, and that galaxy is kept as the song's own picture: a small round dot beside its name in the song list (play it through again and the new one takes its place). With Reduce Motion it does not turn and nothing flashes.</p><p>🌌 Listen to the Sky turns a real picture of the sky into sound. A line crosses the picture from left to right and plays what it touches: the height is the pitch (the top is high), how bright it is is how loud, warm light is a soft pad, blue light is a bell, and white light and the stars are small chimes. The picture glows where the line is. Tap the picture to start (sound needs a tap, and on an iPhone the silent switch mutes it), tap a side for another picture, the middle to pause. A song that is playing waits while this is open and carries on when you choose another style. The three pictures are from the Hubble Space Telescope; each one's credit is under it.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. When a song starts the scene opens from black: a thin line of blue-white light grows along the horizon from the right, the Earth and the sky come out of the dark behind it, right to left, and a gold solar wing swings slowly through the corner and away. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning: more of them as the song builds, a chain of clouds one after another at a big moment (with a gold glint along the station's wings, and now and then a rare violet sprite over a storm), and only a rare soft glow in a slow song. Aboard, the arm moves between poses now and then and a few small lights come and go. And now and then the sky does something of its own: a shooting star burns across the dark of the Earth just under the horizon (more of them in a song's quiet passages), a thin crescent Moon comes up over the horizon and climbs with the stars, and a satellite crosses the stars with a soft glint. In a song's last half minute the Sun comes up on the horizon, its light spreads across the Earth until the whole view is in daylight on the last note, and then the station flies on into the night again. With Reduce Motion there are no flashes, only a slow faint glow in a cloud now and then, the station holds still, the full view is there from the first note, and there is no ending, no shooting star, no Moon and no satellite.</p><p>🌍 Looking out, the style after it, is the same scene seen the other way: out from between the station's parts, with the Earth overhead in daylight (blue sea, white cloud, the thin blue line of the air along its curve) and black space below. A docked capsule and a module's edge on the left, a tall gold solar wing and a white module on the right, the Cupola along the bottom. The music does what it does in Above the Storms: the kick lights the cloud from inside, a big moment sends a chain across it and a gold glint along the wing, and the singer's voice lifts the line of air. The Earth only drifts. When the Moon is up, its crescent stands in the black below the Earth. With Reduce Motion it is a still frame.</p><p>🪟 Cupola, the style after that, is the same night seen straight down through the Cupola's seven windows: the towns, the cloud and the lightning glide slowly under the glass. The kick lights the cloud from inside, the window frames catch the lightning's light along their edges, a big moment sends a chain across the cloud and a gold glint along the frames, and the singer's voice lifts a faint violet in the air below. Now and then a shooting star burns across under the middle window. With Reduce Motion it is a still frame.</p><p>🌗 One orbit, the style after that, is the night view and the day view in one song. It opens on the night side (Above the Storms, with its reveal), dissolves slowly into the day side (Looking out) when a chorus lands, and comes back to the night when the song quietens. It never leaves a view sooner than half a minute after arriving, a song with no clear sections still goes round, and it is always back on the night side for the song's ending. With Reduce Motion both views hold still and only the dissolve between them is left.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>V N</kbd><span>Play mode, Hard: two more keys, on the row below</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
+    <div id="buildStamp" data-built="2026-11-24T18:46:41Z" title="when this copy of the studio was last changed"></div>
+    <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. Dim in the panel sets how dark it sits behind the words.</p><p>💫 Song galaxy grows a spiral out of the song. It starts as a small glow in the dark; as the song plays, two arms wind outward from it, and where the song is now is the tip of each arm. Every kick adds a handful of stars there, a quiet verse leaves a thin blue stretch, and a chorus leaves a bright one with pale gold in it. By the last note the whole song is there as one galaxy, turning slowly, and that galaxy is kept as the song's own picture: a small round dot beside its name in the song list (play it through again and the new one takes its place). With Reduce Motion it does not turn and nothing flashes.</p><p>🌌 Listen to the Sky turns a real picture of the sky into sound. A line crosses the picture from left to right and plays what it touches: the height is the pitch (the top is high), how bright it is is how loud, warm light is a soft pad, blue light is a bell, and white light and the stars are small chimes. The picture glows where the line is. Tap the picture to start (sound needs a tap, and on an iPhone the silent switch mutes it), tap a side for another picture, the middle to pause. A song that is playing waits while this is open and carries on when you choose another style. The three pictures are from the Hubble Space Telescope; each one's credit is under it.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. When a song starts the scene opens from black: a thin line of blue-white light grows along the horizon from the right, the Earth and the sky come out of the dark behind it, right to left, and a gold solar wing swings slowly through the corner and away. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning: more of them as the song builds, a chain of clouds one after another at a big moment (with a gold glint along the station's wings, and now and then a rare violet sprite over a storm), and only a rare soft glow in a slow song. Aboard, the arm moves between poses now and then and a few small lights come and go. And now and then the sky does something of its own: a shooting star burns across the dark of the Earth just under the horizon (more of them in a song's quiet passages), a thin crescent Moon comes up over the horizon and climbs with the stars, and a satellite crosses the stars with a soft glint. In a song's last half minute the Sun comes up on the horizon, its light spreads across the Earth until the whole view is in daylight on the last note, and then the station flies on into the night again. With Reduce Motion there are no flashes, only a slow faint glow in a cloud now and then, the station holds still, the full view is there from the first note, and there is no ending, no shooting star, no Moon and no satellite.</p><p>🌍 Looking out is the same scene seen the other way: out from between the station's parts, with the Earth overhead in daylight (blue sea, white cloud, the thin blue line of the air along its curve) and black space below. A docked capsule and a module's edge on the left, a tall gold solar wing and a white module on the right, the Cupola along the bottom. The music does what it does in Above the Storms: the kick lights the cloud from inside, a big moment sends a chain across it and a gold glint along the wing, and the singer's voice lifts the line of air. The Earth only drifts. When the Moon is up, its crescent stands in the black below the Earth. With Reduce Motion it is a still frame.</p><p>🪟 Cupola is the same night seen straight down through the Cupola's seven windows: the towns, the cloud and the lightning glide slowly under the glass. The kick lights the cloud from inside, the window frames catch the lightning's light along their edges, a big moment sends a chain across the cloud and a gold glint along the frames, and the singer's voice lifts a faint violet in the air below. Now and then a shooting star burns across under the middle window. With Reduce Motion it is a still frame.</p><p>🌗 One orbit is the night view and the day view in one song. It opens on the night side (Above the Storms, with its reveal), dissolves slowly into the day side (Looking out) when a chorus lands, and comes back to the night when the song quietens. It never leaves a view sooner than half a minute after arriving, a song with no clear sections still goes round, and it is always back on the night side for the song's ending. With Reduce Motion both views hold still and only the dissolve between them is left.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>V N</kbd><span>Play mode, Hard: two more keys, on the row below</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
 <div id="hintScrim"></div>
   </div>
 </div>
@@ -747,7 +696,7 @@
 </div>
 <div id="gamePause" role="dialog" aria-label="Paused">
   <div class="card">
-    <h3>⏸ Paused</h3>
+    <h3>Paused</h3>
     <div class="gp-row"><button id="gpResume" class="ts-btn">▶ Resume · Esc</button><button id="gpRestart" class="ts-btn">↻ Restart · R</button></div>
   </div>
 </div>
@@ -762,7 +711,7 @@
 <canvas id="confetti" aria-hidden="true"></canvas>
 <div id="summary">
   <div class="card">
-    <h3>⚡ Song Complete</h3>
+    <h3>Song complete</h3>
     <div class="big" id="sumScore">0</div>
     <div class="line" id="sumCombo"></div>
     <div class="line" id="sumAcc"></div>
@@ -1028,9 +977,7 @@ let currentTheme = themes.cyber;
 const themeBar = document.getElementById('themes');
 Object.entries(themes).forEach(([name, colors])=>{
   const b = document.createElement('div');
-  // No tech-btn brackets here: they're a fixed magenta, sized for the big
-  // buttons (22% of a 27px chip), and they fight the very colour the chip is
-  // advertising. The white border + glow already says which one is picked.
+  // A swatch is its own two colours; the white ring says which one is picked.
   b.className = 'theme-btn' + (name==='cyber' ? ' active' : '');
   b.style.background = `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`;
   b.style.color = colors[0];
@@ -1255,7 +1202,7 @@ async function loadSongCover(file){
 
 // --- Firework shape/style selector ---
 const shapeNames = ['Auto','Peony','Ring','Willow','Spiral','Crackle','Flame','Fountain','Comet','Heart','Waves','Curtains','Backdrop','Nebula','Synapse','Tree','Journey','Stage','Orbit','Galaxy','Sky','Storms','StormsOut','StormsCupola','StormsTrip'];
-const SHAPE_ICONS = { Auto:'🎲', Peony:'🌸', Ring:'⭕', Willow:'🌿', Spiral:'🌀',
+const SHAPE_ICONS = { Auto:'🎲', Peony:'🌸', Ring:'⚪', Willow:'🌿', Spiral:'🌀',
                       Crackle:'✨', Flame:'🔥', Fountain:'⛲', Comet:'☄️', Heart:'💜', Waves:'🌊', Curtains:'🎐', Backdrop:'🖼', Nebula:'🌌', Synapse:'🧠', Tree:'🌲', Journey:'🧭', Stage:'🌙', Orbit:'🪐', Galaxy:'💫', Sky:'🌌', Storms:'🛰️', StormsOut:'🌍', StormsCupola:'🪟', StormsTrip:'🌗' };
 // "Above the Storms" has a Spanish name too. The studio has no translation
 // system; this one scene's name follows the browser's language.
@@ -1309,7 +1256,19 @@ function isFullScene(name){
 }
 const shapeBar = document.getElementById('shapes');
 const shapeButtons = {};
-shapeNames.forEach(name=>{
+// The list is in three groups, each under a small heading: the sky first
+// (Storms and Music Orbit share the first row), then the rooms, then the
+// fireworks. shapeNames keeps its order (prefs and the journeys go by name,
+// not by place); shapeOrder is the order on screen, and the arrow keys walk it.
+const SHAPE_GROUPS = [
+  ['Sky',       ['Storms','Orbit','StormsOut','StormsCupola','StormsTrip','Galaxy','Sky']],
+  ['Rooms',     ['Curtains','Backdrop','Nebula','Synapse','Tree','Journey','Stage','Waves']],
+  ['Fireworks', ['Auto','Peony','Ring','Willow','Spiral','Crackle','Flame','Fountain','Comet','Heart']],
+];
+const shapeOrder = [];
+const addShapeButton = (name)=>{
+  if(shapeButtons[name] || !shapeNames.includes(name)) return;
+  shapeOrder.push(name);
   const b = document.createElement('div');
   b.className = 'shape-btn tech-btn' + (name==='Auto' ? ' active' : '');
   b.textContent = (SHAPE_ICONS[name] || '') + ' ' + (SHAPE_LABELS[name] || name);
@@ -1332,7 +1291,16 @@ shapeNames.forEach(name=>{
   };
   shapeButtons[name] = b;
   shapeBar.appendChild(b);
+};
+SHAPE_GROUPS.forEach(([title, names])=>{
+  const h = document.createElement('div');
+  h.className = 'shape-group';
+  h.textContent = title;
+  shapeBar.appendChild(h);
+  names.forEach(addShapeButton);
+  if(names.length % 2 && shapeButtons[names[names.length - 1]]) shapeButtons[names[names.length - 1]].classList.add('wide');
 });
+shapeNames.forEach(addShapeButton);   // a style not yet in a group still gets its button, at the end
 function selectShape(name){
   chooseShape(name);
   document.querySelectorAll('#shapes .shape-btn').forEach(el=>el.classList.remove('active'));
@@ -4679,7 +4647,7 @@ function saveBest(file, diff, rec){
 function bestSlot(){ const d = difficulty + (laneCount() === 8 ? '8' : ''); return chartKind === 'all' ? d : d + '|' + chartKind; }
 function showBest(){
   const b = gameMode === 'play' ? bestFor(lastFile, bestSlot()) : null;
-  hudBest.textContent = b ? 'BEST ' + Number(b.score).toLocaleString() + ' · ' + b.rank : '';
+  hudBest.textContent = b ? 'Best ' + Number(b.score).toLocaleString() + ' · ' + b.rank : '';
 }
 
 // Put the chart in play from wherever the song is now. A chart usually
@@ -4710,8 +4678,8 @@ async function prepareChart(){
   chartNotes = []; chartIdx = 0;
   setPlayRouting(false); // chart mode plays audio un-delayed
   clearTimeout(showJudge._t); // don't let a pending 500ms judge-clear wipe the status
-  hudJudge.textContent = 'READING SONG…';
-  hudJudge.style.color = '#9fe4ea';
+  hudJudge.textContent = 'Reading song…';
+  hudJudge.style.color = '#dcd8ee';
   hudJudge.style.textShadow = 'none';
   const req = lastFile;
   try{
@@ -4729,7 +4697,7 @@ async function prepareChart(){
   }finally{
     if(id === chartBuildId){
       chartBuilding = false;
-      if(hudJudge.textContent === 'READING SONG…') hudJudge.textContent = '';
+      if(hudJudge.textContent === 'Reading song…') hudJudge.textContent = '';
     }
   }
 }
@@ -5282,8 +5250,8 @@ function comboMult(){ return Math.min(RHYTHM.MAX_MULT, 1 + Math.floor(stats.comb
 // pink. The HUD text, the on-canvas counter and the milestone bursts all
 // read the same tier so the whole screen heats up together.
 function comboHeat(){ return stats.combo >= 60 ? 3 : (stats.combo >= 30 ? 2 : (stats.combo >= 10 ? 1 : 0)); }
-const HEAT_RGB = ['0,255,242', '255,214,10', '255,106,26', '255,43,214'];
-const HEAT_HEX = ['#00fff2', '#ffd60a', '#ff6a1a', '#ff2bd6'];
+const HEAT_RGB = ['159,216,255', '255,216,102', '255,176,87', '242,155,224'];
+const HEAT_HEX = ['#9fd8ff', '#ffd866', '#ffb057', '#f29be0'];
 // Re-run the HUD's pop animation: drop the class, force a reflow, add it back.
 function hudPop(el){
   el.classList.remove('pop');
@@ -5292,13 +5260,13 @@ function hudPop(el){
 }
 function updateHud(){
   hudScore.textContent = stats.score.toLocaleString();
-  hudCombo.textContent = stats.combo > 1 ? (stats.combo + ' COMBO  ×' + comboMult()) : '';
+  hudCombo.textContent = stats.combo > 1 ? (stats.combo + ' combo ×' + comboMult()) : '';
   hudCombo.dataset.heat = comboHeat();   // the heat tiers restyle it; the verdict below gets the pop
 }
 function showJudge(txt, color){
   hudJudge.textContent = txt;
   hudJudge.style.color = color;
-  hudJudge.style.textShadow = '0 0 8px ' + color + ', 0 0 16px ' + color;
+  hudJudge.style.textShadow = '0 1px 3px rgba(0,0,0,0.8), 0 0 10px ' + color;
   hudPop(hudJudge);
   clearTimeout(showJudge._t);
   showJudge._t = setTimeout(()=>{ hudJudge.textContent = ''; }, 500);
@@ -5371,11 +5339,11 @@ function pressLane(lane){
       stats.miss++;
       hitFx.push({lane, t0: performance.now(), kind: 'miss'});
       musicStumble(lane);
-      showJudge('MISS', JUDGE_HEX.miss);
+      showJudge('Miss', JUDGE_HEX.miss);
     }else{
       stats.stray++;
       hitFx.push({lane, t0: performance.now(), kind: 'empty'});
-      showJudge('EMPTY', JUDGE_HEX.miss);
+      showJudge('Empty', JUDGE_HEX.miss);
     }
     updateHud();
     return;
@@ -5389,11 +5357,11 @@ function pressLane(lane){
   if(bestAbs <= RHYTHM.PERFECT_MS){
     best.result = 'perfect'; stats.perfect++; stats.combo++;
     stats.score += RHYTHM.PERFECT_PTS * comboMult();
-    showJudge('PERFECT', '#39ff14');
+    showJudge('Perfect', JUDGE_HEX.perfect);
   } else {
     best.result = 'good'; stats.good++; stats.combo++;
     stats.score += RHYTHM.GOOD_PTS * comboMult();
-    showJudge('GOOD', '#00fff2');
+    showJudge('Good', JUDGE_HEX.good);
   }
   stats.maxCombo = Math.max(stats.maxCombo, stats.combo);
   if(stats.combo % 50 === 0) confetti(60);   // every 50 in a row
@@ -5415,7 +5383,7 @@ function releaseLane(lane){
       stats.combo = 0;
       hitFx.push({lane, t0: performance.now(), kind: 'dropped'});
       musicStumble(lane);
-      showJudge('DROPPED', JUDGE_HEX.miss);
+      showJudge('Dropped', JUDGE_HEX.miss);
       updateHud();
     }
   }
@@ -5444,9 +5412,9 @@ window.addEventListener('keydown', (e)=>{
   if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
     if(gameMode === 'play') return;
     e.preventDefault();
-    const i = shapeNames.indexOf(journeyOn ? journeyName : currentShape);
-    const next = (i + (e.key === 'ArrowRight' ? 1 : -1) + shapeNames.length) % shapeNames.length;
-    const name = shapeNames[next], was = currentShape;
+    const i = shapeOrder.indexOf(journeyOn ? journeyName : currentShape);
+    const next = (i + (e.key === 'ArrowRight' ? 1 : -1) + shapeOrder.length) % shapeOrder.length;
+    const name = shapeOrder[next], was = currentShape;
     selectShape(name);
     if(isCurtains(name) && !isCurtains(was)) curtainW = 0;      // same fresh-layout rule the click path uses
     if(name === 'Synapse') synapseW = 0;
@@ -5548,17 +5516,37 @@ function laneGeom(){
   return { left: (w - totalW)/2, laneW: totalW/n, hitY: h*0.82 };
 }
 
-// Six neon lanes, a spectrum walk from left to right: violet, blue, cyan for
-// the bass hand; magenta, orange, gold for the voice hand. Every one at full
-// chroma, so notes and receptors read as coloured light against the dark
-// room rather than tinted grey. The two hands still meet at cyan | magenta.
+// Six lanes, a walk of colour from left to right: indigo, blue, aqua for the
+// bass hand; orchid, amber, gold for the voice hand. Soft but clearly
+// coloured, so notes and receptors read as coloured light against the dark
+// room rather than tinted grey. The two hands meet at aqua | orchid.
 // (Eight colours, for Hard's eight keys: V is mint and N is rose, between the
 // hands. With six keys those two are skipped: see laneTint.)
-const LANE_HEX = ['#7a3dff', '#1a85ff', '#00fff2', '#2dffa0', '#ff8fc7', '#ff2bd6', '#ff6a1a', '#ffd60a'];
-const LANE_RGB = ['122,61,255', '26,133,255', '0,255,242', '45,255,160', '255,143,199', '255,43,214', '255,106,26', '255,214,10'];
-// Verdict colours: PERFECT neon green, GOOD cyan, MISS crimson.
-const JUDGE_HEX = {perfect:'#39ff14', good:'#00fff2', miss:'#ff2050'};
-const JUDGE_RGB = {perfect:'57,255,20', good:'0,255,242', miss:'255,32,80'};
+// Indigo, blue, aqua, mint | rose, orchid, amber, gold: cool for the left hand,
+// warm for the right, and no red among them.
+const LANE_HEX = ['#7c7bff', '#4da3ff', '#3fdfe6', '#62e6b1', '#ff9fcf', '#e879f0', '#ffb057', '#ffe066'];
+const LANE_RGB = ['124,123,255', '77,163,255', '63,223,230', '98,230,177', '255,159,207', '232,121,240', '255,176,87', '255,224,102'];
+// Verdict colours: Perfect soft green, Good sky blue, Miss soft violet. Never
+// red: nothing in the studio is.
+const JUDGE_HEX = {perfect:'#8cf5a8', good:'#7cc8ff', miss:'#b9a8ff'};
+const JUDGE_RGB = {perfect:'140,245,168', good:'124,200,255', miss:'185,168,255'};
+const UI_FONT = 'ui-rounded, system-ui, sans-serif';   // the page's own lettering, for the words drawn on the canvas
+// A rounded bar (a note, a receptor). Where the canvas has no roundRect it is a plain one.
+function pill(x, y, w, h, r){
+  ctx.beginPath();
+  if(ctx.roundRect && w > 0 && h > 0) ctx.roundRect(x, y, w, h, Math.max(0, Math.min(r, h/2, w/2)));
+  else ctx.rect(x, y, w, h);
+  ctx.fill();
+}
+// How wide a verdict word is at 15 px, measured once a word.
+// 'KICK' → 'Kick', 'miss' → 'Miss': the words on the lanes in sentence case, each made once.
+const sentenceOf = {};
+function sentence(w){ return sentenceOf[w] || (sentenceOf[w] = w[0].toUpperCase() + w.slice(1).toLowerCase()); }
+const judgeWordW = {};
+function judgeWordWidth(word){
+  if(!judgeWordW[word]){ ctx.font = '800 15px ' + UI_FONT; judgeWordW[word] = ctx.measureText(word).width || 40; }
+  return judgeWordW[word];
+}
 // Glow sprites, baked once per colour (see makeGlowSprite): one per lane, one
 // per verdict, one per combo heat. Stretched behind a note, a receptor or the
 // combo number they are its halo — no shadowBlur, no per-frame gradients.
@@ -5578,7 +5566,7 @@ function laneGradients(g){
   const key = g.left + '|' + g.laneW + '|' + g.hitY + '|' + laneCount();
   if(laneGrad.key === key) return laneGrad;
   laneGrad.key = key; laneGrad.floor = []; laneGrad.beam = [];
-  // the crimson flood a miss sends up its lane: one vertical fade serves every lane
+  // the soft violet flood a miss sends up its lane: one vertical fade serves every lane
   const miss = ctx.createLinearGradient(0, g.hitY*0.45, 0, g.hitY);
   miss.addColorStop(0,   'rgba(' + JUDGE_RGB.miss + ',0)');
   miss.addColorStop(0.5, 'rgba(' + JUDGE_RGB.miss + ',0.3)');
@@ -5601,6 +5589,8 @@ function laneGradients(g){
   }
   return laneGrad;
 }
+const JUDGE_NARROW = 64;       // lanes thinner than this (px) stagger their verdict words...
+const JUDGE_STEP = 42;         // ...this far apart: more than a word's rise plus its height
 const LANE_FLOOR_TOP = 0.4;    // the lit floor starts this far down the lane (fraction of hitY)
 const LANE_BEAM_TOP = 0.45;    // a press beam reaches up to here
 function drawRhythm(now){
@@ -5681,7 +5671,7 @@ function drawRhythm(now){
   ctx.fillStyle = 'rgba(4,4,10,0.55)';
   ctx.fillRect(g.left, 0, W6, g.hitY + 16);
   // LANES: each a column of its own colour, dark at the top and lit toward the
-  // hit line, walled by thin neon lines that brighten on the beat. Pressing a
+  // hit line, walled by thin lines that brighten on the beat. Pressing a
   // lane throws a beam of its light up the column; a hold keeps it burning.
   for(let i=0;i<laneCount();i++){
     const x = g.left + i*g.laneW;
@@ -5703,7 +5693,7 @@ function drawRhythm(now){
     ctx.fillStyle = 'rgba(' + LANE_RGB[laneTint(i)] + ',0.3)';
     ctx.fillRect(x, 0, 1, yTop);
     ctx.fillRect(x + g.laneW - 1, 0, 1, yTop);
-    ctx.fillStyle = 'rgba(' + LANE_RGB[laneTint(i)] + ',0.85)';
+    ctx.fillStyle = 'rgba(' + LANE_RGB[laneTint(i)] + ',0.6)';
     ctx.fillRect(x, yTop, 1, g.hitY + 16 - yTop);
     ctx.fillRect(x + g.laneW - 1, yTop, 1, g.hitY + 16 - yTop);
   }
@@ -5722,8 +5712,6 @@ function drawRhythm(now){
     ctx.fillStyle = 'rgba(' + LANE_RGB[laneTint(i)] + ',0.18)';
     ctx.fillRect(x + 1, g.hitY - perfH, g.laneW - 2, perfH*2);
   }
-  ctx.strokeStyle = 'rgba(255,255,255,0.26)';
-  ctx.strokeRect(g.left - 7.5, g.hitY - goodH + 0.5, W6 + 15, goodH*2 - 1);
   ctx.strokeStyle = 'rgba(255,255,255,0.8)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
@@ -5732,7 +5720,7 @@ function drawRhythm(now){
   ctx.stroke();
   ctx.lineWidth = 1;
   // THE COMBO, centred over the lanes behind the falling notes: it heats up
-  // through the tiers (cyan → gold → orange → white-hot pink), pulses with the
+  // through the tiers (sky → gold → amber → white-hot pink), pulses with the
   // beat and swells when it rolls over a milestone — a number that is part
   // of the music, not a label.
   if(stats.combo >= 5){
@@ -5748,22 +5736,22 @@ function drawRhythm(now){
     ctx.globalAlpha = 1;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '900 ' + size + 'px Consolas, monospace';
+    ctx.font = '900 ' + size + 'px ' + UI_FONT;
     ctx.fillStyle = 'rgba(' + hc + ',0.95)';   // no outline: it sits on the dark floor, behind the notes
     ctx.fillText(txt, cx, cy);
     if(heat === 3){ // white-hot: the colour stays in the halo, the heart goes white
       ctx.fillStyle = 'rgba(255,255,255,' + (0.45 + 0.3*beatPulse).toFixed(3) + ')';
       ctx.fillText(txt, cx, cy);
     }
-    ctx.font = '800 11px Consolas, monospace';
+    ctx.font = '700 12px ' + UI_FONT;
     ctx.fillStyle = 'rgba(' + hc + ',0.9)';
-    ctx.fillText('COMBO  ×' + comboMult(), cx, cy + size*0.62 + 6);
+    ctx.fillText('combo ×' + comboMult(), cx, cy + size*0.62 + 6);
     ctx.textBaseline = 'alphabetic';
   }
   // RECEPTORS: each lane's "button" is a strip of its own light on the hit
   // line, a halo behind it, breathing with the BPM and flaring tall and
   // white-hot the instant you press its key. Holds keep theirs lit.
-  ctx.font = '800 15px Consolas, monospace';
+  ctx.font = '800 15px ' + UI_FONT;
   ctx.textAlign = 'center';
   for(let i=0;i<laneCount();i++){
     const x = g.left + i*g.laneW;
@@ -5778,9 +5766,9 @@ function drawRhythm(now){
     ctx.drawImage(laneGlow[laneTint(i)], cx - hw, g.hitY - hh, hw*2, hh*2);
     ctx.globalAlpha = 1;
     ctx.fillStyle = 'rgba(' + LANE_RGB[laneTint(i)] + ',' + (0.55 + energy*0.45).toFixed(3) + ')';
-    ctx.fillRect(cx - wdt/2, g.hitY - hgt/2, wdt, hgt);
+    pill(cx - wdt/2, g.hitY - hgt/2, wdt, hgt, 7);
     ctx.fillStyle = 'rgba(255,255,255,' + (0.2 + flare*0.6 + (holdLane[i] ? 0.3 : 0)).toFixed(3) + ')';
-    ctx.fillRect(cx - wdt/2 + 3, g.hitY - 1.5, wdt - 6, 3);
+    pill(cx - wdt/2 + 5, g.hitY - 1.5, wdt - 10, 3, 1.5);
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = (flare > 0.3 || holdLane[i]) ? '#fff' : LANE_HEX[laneTint(i)];
     // V and N are on the row below S D F and J K L: their letters sit lower too.
@@ -5789,14 +5777,14 @@ function drawRhythm(now){
     const word = !chartReady || chartKind === 'all' ? '' : (chartKind === 'drums' ? (eight ? DRUM.LABELS_8 : DRUM.LABELS)[i]
       : (chartKind === 'mix' ? (eight ? MIX.LABELS_8 : MIX.LABELS)[i] : (i === 0 ? 'LOW' : (i === laneCount() - 1 ? 'HIGH' : ''))));
     if(word){   // which drum this key is, or which end of the notes
-      ctx.font = '700 8px Consolas, monospace';
-      ctx.fillStyle = 'rgba(' + LANE_RGB[laneTint(i)] + ',0.75)';
-      ctx.fillText(word, cx, g.hitY + 47 + drop);
-      ctx.font = '800 15px Consolas, monospace';
+      ctx.font = '600 10px ' + UI_FONT;
+      ctx.fillStyle = 'rgba(' + LANE_RGB[laneTint(i)] + ',0.85)';
+      ctx.fillText(sentence(word), cx, g.hitY + 48 + drop);
+      ctx.font = '800 15px ' + UI_FONT;
     }
   }
   // NOTES: a bar of the lane's light with its halo behind it and a white-hot
-  // core, brightening as it nears the line. A missed note turns crimson on
+  // core, brightening as it nears the line. A missed note turns soft violet on
   // its way out; a hold's tail is a column of the same light that shimmers
   // while it is being collected.
   for(const n of notes){
@@ -5806,7 +5794,7 @@ function drawRhythm(now){
       stats.miss++; stats.combo = 0;
       hitFx.push({lane: n.lane, t0: performance.now(), kind: 'miss'});
       musicStumble(n.lane); // the song falters where your hands did
-      showJudge('MISS', JUDGE_HEX.miss);
+      showJudge('Miss', JUDGE_HEX.miss);
       updateHud();
     }
     const isHold = (n.dur || 0) > 0;
@@ -5857,9 +5845,9 @@ function drawRhythm(now){
     ctx.drawImage(missed ? judgeGlow.miss : laneGlow[laneTint(n.lane)], x - g.laneW*0.2, y - 28, g.laneW*1.4, 56);
     ctx.globalAlpha = 1;
     ctx.fillStyle = 'rgba(' + rgb + ',' + alpha.toFixed(3) + ')';
-    ctx.fillRect(x + 4, y - 9, g.laneW - 8, 18);
+    pill(x + 4, y - 9, g.laneW - 8, 18, 8);
     ctx.fillStyle = 'rgba(255,255,255,' + (alpha*0.55).toFixed(3) + ')';
-    ctx.fillRect(x + 6, y - 2, g.laneW - 12, 4);
+    pill(x + 9, y - 2, g.laneW - 18, 4, 2);
   }
   notes = notes.filter(n =>
     (!n.judged || gnow - n.judgedAt < 200) ||
@@ -5882,14 +5870,14 @@ function drawRhythm(now){
       ctx.globalAlpha = 0.7*(1 - into*0.6);
       ctx.drawImage(heatGlow[0], cx - hr, cy - hr*0.6, hr*2, hr*1.2);
       ctx.globalAlpha = 1 - into*0.5;
-      ctx.font = '900 ' + size + 'px Consolas, monospace';
+      ctx.font = '900 ' + size + 'px ' + UI_FONT;
       ctx.fillStyle = '#fff';
       ctx.fillText(String(num), cx, cy);
     }else{
       ctx.globalAlpha = 0.75 + 0.25*Math.sin(now*0.006);
-      ctx.font = '800 14px Consolas, monospace';
-      ctx.fillStyle = '#9fe4ea';
-      ctx.fillText('READING SONG…', cx, cy);
+      ctx.font = '800 14px ' + UI_FONT;
+      ctx.fillStyle = '#dcd8ee';
+      ctx.fillText('Reading song…', cx, cy);
     }
     ctx.globalAlpha = 1;
     ctx.textBaseline = 'alphabetic';
@@ -5897,14 +5885,14 @@ function drawRhythm(now){
 
   // HIT FEEDBACK on the receptor, all in the verdict's colour: a halo that
   // blooms and two rings that race out for a hit (the PERFECT ring bigger,
-  // with a white inner ring), a crimson flood up the lane for a miss, and
+  // with a white inner ring), a soft violet flood up the lane for a miss, and
   // the verdict word floating up — outlined dark so it reads on any room.
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
   for(const fx of hitFx){
     const age = now - fx.t0;
     const hit = fx.kind === 'perfect' || fx.kind === 'good';
-    const col = JUDGE_RGB[fx.kind] || JUDGE_RGB.miss;   // an empty press and a dropped hold wear the miss's crimson
+    const col = JUDGE_RGB[fx.kind] || JUDGE_RGB.miss;   // an empty press and a dropped hold wear the miss's violet
     const cx = g.left + (fx.lane + 0.5)*g.laneW;
     ctx.globalCompositeOperation = 'lighter';
     if(hit){
@@ -5934,11 +5922,18 @@ function drawRhythm(now){
       ctx.globalAlpha = 1;
     }
     const tp = Math.min(1, age/550);
-    const ty = g.hitY - 30 - tp*26;
-    const txt = fx.kind.toUpperCase();
+    const txt = sentence(fx.kind);
+    // Narrow lanes (a phone): a word is wider than its lane, and two side by
+    // side ran into each other. Every other lane's word floats one step
+    // higher, clear of its neighbours' whole rise, and a word is never wider
+    // than the gap to the next word at its own height.
+    const narrow = g.laneW < JUDGE_NARROW;
+    const ty = g.hitY - 30 - tp*26 - (narrow && (fx.lane & 1) ? JUDGE_STEP : 0);
+    const room = (narrow ? g.laneW*1.9 : g.laneW) - 6;
     // whole-pixel sizes so the font string repeats frame to frame (parsed once, then cached)
-    const size = fx.kind === 'perfect' ? Math.round(17 + 7*Math.max(0, 1 - age/140)) : 15;
-    ctx.font = '800 ' + size + 'px Consolas, monospace';
+    const want = fx.kind === 'perfect' ? Math.round(17 + 7*Math.max(0, 1 - age/140)) : 15;
+    const size = Math.max(9, Math.min(want, Math.floor(15*room/judgeWordWidth(txt))));
+    ctx.font = '800 ' + size + 'px ' + UI_FONT;
     ctx.globalCompositeOperation = 'source-over';
     ctx.lineWidth = 4;
     ctx.strokeStyle = 'rgba(0,0,0,' + (0.7*(1 - tp)).toFixed(3) + ')';
@@ -5951,7 +5946,7 @@ function drawRhythm(now){
   ctx.restore();
 }
 
-// End-of-song summary: a rank letter in its own neon (S for a flawless run,
+// End-of-song summary: a rank letter in its own colour (S for a flawless run,
 // down to D), final score, max combo, accuracy — each count lit in the
 // colour of its verdict. (Only numbers go into the markup.)
 function onSongEnded(){
@@ -5999,7 +5994,7 @@ summaryEl.addEventListener('click', ()=>{ summaryEl.style.display = 'none'; });
 // Reduced motion: fewer pieces that drift down slowly, no burst and no spin.
 const confettiCv = document.getElementById('confetti');
 const confettiCtx = confettiCv.getContext('2d');
-const CONFETTI_COLS = ['#39ff14','#00fff2','#ff2bd6','#ffe14d','#ffffff','#b26bff'];
+const CONFETTI_COLS = ['#8cf5a8','#7cc8ff','#f29be0','#ffe07a','#ffffff','#b9a8ff'];
 let confettiBits = [], confettiRaf = 0, confettiLast = 0;
 function confetti(n){
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -6388,7 +6383,7 @@ async function startMic(){
   viz.start();
   resetBpm();
   addMusicBtn.classList.remove('loaded');
-  addMusicLabel.textContent = '＋ Add Music';
+  addMusicLabel.textContent = '＋ Add music';
   micUI();
   micKeepAwake(true);
   setPanelMin(true);   // the show is the room now — give it the screen
@@ -6573,7 +6568,7 @@ function onSongUnplayable(){
     libSaveState();
     if(!queue.length){
       addMusicBtn.classList.remove('loaded');
-      addMusicLabel.textContent = '＋ Add Music';
+      addMusicLabel.textContent = '＋ Add music';
     }else{
       const name = queue[queueIdx].name;
       addMusicLabel.textContent = '♪ ' + (name.length > 26 ? name.slice(0, 24) + '…' : name);
@@ -7226,7 +7221,7 @@ function syncLyricsUI(){
   lyrTimeRow.hidden = !show;
   syncLyrShift();
   lyricsToggle.classList.toggle('on', lyricsOn);
-  lyricsToggle.textContent = lyricsOn ? 'on' : 'off';
+  lyricsToggle.textContent = lyricsOn ? 'On' : 'Off';
   lyricsToggle.setAttribute('aria-pressed', lyricsOn ? 'true' : 'false');
   if(lyricsLooking) lyricsLabel.textContent = '♫ Looking…';
   else if(!flashLyricsLabel._t) lyricsLabel.textContent = lyr ? '♫ ' + lyr.label : '♫ Find lyrics';
@@ -7528,6 +7523,14 @@ function pictureColour(src){
 // Full chroma, always: the words glow in the pure hue of the room, never a
 // pastel of it. The Curtains' walk is followed for its hue only — its ends
 // darken and dust the cords on purpose, but a neon glow has to stay hot.
+// What wears --room: set on these alone, not on the whole page, so a room
+// whose colour walks restyles a handful of boxes and nothing else.
+let roomLitEls = null;
+function roomLit(){
+  return roomLitEls || (roomLitEls = ['panel','hint','tapSheet','calSheet','scoreHud','gamePause','summary']
+    .map(id => document.getElementById(id)).filter(Boolean));
+}
+const ROOM_PALE = 0.3;     // how far toward white the panel's accent sits from the room's pure colour
 const LYR_GLOW_L = 0.56;   // lightness of the glow: the brightest a hue gets before it starts going white
 function roomGlowRgb(){
   if(isCurtains(currentShape)) return hslToRgb(curtainHsl(0, 1, LYR_GLOW_L)[0], 1, LYR_GLOW_L);
@@ -7566,6 +7569,10 @@ function tuneLyricsToRoom(){
   // moved a real step — sixteen of colour, a tenth of strength, four pixels
   // of reach — before the words follow it. A few steps' drift isn't a new colour.
   const rgb = vivid.map(v => v & ~15).join(',');
+  // The panel, the cards and the score take the same colour a step paler, so
+  // they sit in the room's light without shouting (--room, in the stylesheet).
+  const room = vivid.map(v => Math.round(v + (255 - v)*ROOM_PALE) & ~15).join(',');
+  if(room !== tuneLyricsToRoom._room){ tuneLyricsToRoom._room = room; for(const el of roomLit()) el.style.setProperty('--room', room); }
   // The title card's neon is the same colour; it shows before the words do,
   // and whether or not there are any, so it is set here, ahead of the words.
   if(rgb !== tuneLyricsToRoom._card){ tuneLyricsToRoom._card = rgb; titleCard.style.setProperty('--tc-glow', rgb); }
@@ -18294,7 +18301,7 @@ function draw(){
   const el = document.getElementById('buildStamp');
   const d = new Date(el.dataset.built || document.lastModified);
   if(isNaN(d)) return;
-  el.textContent = 'version ' + d.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  el.textContent = 'Version ' + d.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 })();
 // Open the way it was left. Down here, after everything the buttons touch
 // has been declared — a style button resets its scene's state when clicked.
