@@ -119,6 +119,8 @@
   #vu{margin-top:9px;display:flex;flex-direction:column;gap:4px;}
   .vu-row{display:flex;align-items:center;gap:8px;}
   .vu-label{font-size:10px;color:var(--mute);width:34px;flex:none;}
+  #bgLevelRow{margin-top:6px;}
+  #bgLevelRow .vu-label{width:auto;min-width:34px;}   /* "Backdrop" is a longer word than the other sliders' */
   .vu-track{flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:4px;position:relative;overflow:hidden;}
   /* The meters move by transform, never by width or left: a width is a
      layout, and three of them every frame with the panel open cost the
@@ -604,6 +606,7 @@
         <button class="skip-btn fx-btn" data-fx="nostalgic" title="old film: warm faded colour, grain, a soft vignette, a light leak now and then (N)" aria-pressed="false">🎞 Nostalgic</button>
       </div>
       <div class="tr-row" id="orbitRow" hidden><span class="vu-label">Dim</span><input type="range" id="orbitWashBar" min="0" max="85" value="20" aria-label="how dark the solar system sits behind the words"><span class="vu-val" id="orbitWashVal">20</span></div>
+      <div class="tr-row" id="bgLevelRow" hidden><span class="vu-label">Backdrop</span><input type="range" id="bgLevelBar" min="40" max="100" value="85" aria-label="how bright the Backdrop's picture is"><span class="vu-val" id="bgLevelVal">85</span></div>
       <label>Picture</label>
       <div class="row" id="picture"></div>
       <div class="tr-row" id="brightRow"><span class="vu-label">Light</span><input type="range" id="brightBar" min="40" max="100" value="100" aria-label="brightness of the picture"><span class="vu-val" id="brightVal">100</span></div>
@@ -649,7 +652,7 @@
       <button id="recLenBtn" class="skip-btn" title="how long a clip is: 15, 20 or 30 seconds" aria-label="clip length">20s</button>
       <button id="recFullBtn" disabled title="start the song over and record all of it"><span id="recFullLabel">◉ Full song</span></button>
     </div>
-    <div id="buildStamp" data-built="2026-11-25T03:51:43Z" title="when this copy of the studio was last changed"></div>
+    <div id="buildStamp" data-built="2026-11-25T05:34:30Z" title="when this copy of the studio was last changed"></div>
     <div id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle"><button id="hintClose" aria-label="close help">×</button><h3 id="hintTitle">⚡ How it works</h3><p>Add songs — or drop them anywhere on the page — and the first one starts itself. Kicks launch fireworks, the singer's voice blooms a pink heart. Collapse the panel with the – for movie mode 🎬 — and keep an eye on the moon: a shadow cat lives up there. 🐈‍⬛</p><p>🧭 Journey travels between the Curtains, the Tree and Synapse as the song moves.</p><p>🪐 Music Orbit is the real solar system, with every planet where it is today, under the lyrics. Each planet glows with its own part of the song, deep sounds near the Sun and airy ones at the edge. The Sun breathes with the bass, the planets swell a little on the kick, a calm slow song turns it romantic (threads of light between the planets), and a big moment sends a ring out from the Sun and the whole system on a trip, then back: flying through the galaxy, or out to the true distances. Dim in the panel sets how dark it sits behind the words.</p><p>💫 Song galaxy grows a spiral out of the song. It starts as a small glow in the dark; as the song plays, two arms wind outward from it, and where the song is now is the tip of each arm. Every kick adds a handful of stars there, a quiet verse leaves a thin blue stretch, and a chorus leaves a bright one with pale gold in it. By the last note the whole song is there as one galaxy, turning slowly, and that galaxy is kept as the song's own picture: a small round dot beside its name in the song list (play it through again and the new one takes its place). With Reduce Motion it does not turn and nothing flashes.</p><p>🌌 Listen to the Sky turns a real picture of the sky into sound. A line crosses the picture from left to right and plays what it touches: the height is the pitch (the top is high), how bright it is is how loud, warm light is a soft pad, blue light is a bell, and white light and the stars are small chimes. The picture glows where the line is. Tap the picture to start (sound needs a tap, and on an iPhone the silent switch mutes it), tap a side for another picture, the middle to pause. A song that is playing waits while this is open and carries on when you choose another style. The three pictures are from the Hubble Space Telescope; each one's credit is under it.</p><p>🛰️ Above the Storms is the night side of the Earth from a space station: looking the way it flies: the Milky Way and the stars rising slowly, the airglow along the curve, cloud and golden city lights coming up over the horizon and sliding away underneath, the station across the top. When a song starts the scene opens from black: a thin line of blue-white light grows along the horizon from the right, the Earth and the sky come out of the dark behind it, right to left, and a gold solar wing swings slowly through the corner and away. The singer's voice lifts the airglow, the top end of the song sets the stars twinkling, and the tempo sets the pace. The kick lights the clouds from inside, small soft flashes of lightning: more of them as the song builds, a chain of clouds one after another at a big moment (with a gold glint along the station's wings, and now and then a rare violet sprite over a storm), and only a rare soft glow in a slow song. Aboard, the arm moves between poses now and then and a few small lights come and go. And now and then the sky does something of its own: a shooting star burns across the dark of the Earth just under the horizon (more of them in a song's quiet passages), a thin crescent Moon comes up over the horizon and climbs with the stars, and a satellite crosses the stars with a soft glint. In a song's last half minute the Sun comes up on the horizon, its light spreads across the Earth until the whole view is in daylight on the last note, and then the station flies on into the night again. With Reduce Motion there are no flashes, only a slow faint glow in a cloud now and then, the station holds still, the full view is there from the first note, and there is no ending, no shooting star, no Moon and no satellite.</p><p>🌍 Looking out is the same scene seen the other way: out from between the station's parts, with the Earth overhead in daylight (blue sea, white cloud, the thin blue line of the air along its curve) and black space below. A docked capsule and a module's edge on the left, a tall gold solar wing and a white module on the right, the Cupola along the bottom. The music does what it does in Above the Storms: the kick lights the cloud from inside, a big moment sends a chain across it and a gold glint along the wing, and the singer's voice lifts the line of air. The Earth only drifts. When the Moon is up, its crescent stands in the black below the Earth. With Reduce Motion it is a still frame.</p><p>🪟 Cupola is the same night seen straight down through the Cupola's seven windows: the towns, the cloud and the lightning glide slowly under the glass. The kick lights the cloud from inside, the window frames catch the lightning's light along their edges, a big moment sends a chain across the cloud and a gold glint along the frames, and the singer's voice lifts a faint violet in the air below. Now and then a shooting star burns across under the middle window. With Reduce Motion it is a still frame.</p><p>🌗 One orbit is the night view and the day view in one song. It opens on the night side (Above the Storms, with its reveal), dissolves slowly into the day side (Looking out) when a chorus lands, and comes back to the night when the song quietens. It never leaves a view sooner than half a minute after arriving, a song with no clear sections still goes round, and it is always back on the night side for the song's ending. With Reduce Motion both views hold still and only the dissolve between them is left.</p><p>🎤 Mic turns the visuals onto the room: music from another speaker, a band, or your own voice. Nothing is recorded or sent anywhere, and nothing is played back.</p><p>♫ Find lyrics looks the playing song up in LRCLIB, a free lyrics library online, and remembers what it finds. A .lrc file works too: the .lrc button, or drop it on the page.</p><div class="keys"><kbd>space</kbd><span>play / pause</span><kbd>← →</kbd><span>previous / next style</span><kbd>, .</kbd><span>previous / next song</span><kbd>F</kbd><span>fullscreen</span><kbd>C</kbd><span>cinema: everything hides (move the mouse to come back)</span><kbd>⇧C</kbd><span>confetti 🎉</span><kbd>–</kbd><span>collapse the panel</span><kbd>M</kbd><span>live mic on / off 🎤</span><kbd>L</kbd><span>lyrics on / off</span><kbd>[ ]</kbd><span>lyrics sooner / later</span><kbd>B</kbd><span>Curtains → Backdrop → Nebula</span><kbd>W</kbd><span>water</span><kbd>D</kbd><span>disco light show</span><kbd>S</kbd><span>smoke</span><kbd>⇧S</kbd><span>a smoke shot (or tap the floor)</span><kbd>N</kbd><span>nostalgic film</span><kbd>⇧P</kbd><span>pop</span><kbd>?</kbd><span>this help</span><kbd>S D F · J K L</kbd><span>Play mode: drums · the melody, low to high</span><kbd>V N</kbd><span>Play mode, Hard: two more keys, on the row below</span><kbd>Esc</kbd><span>Play mode: pause / resume</span><kbd>R</kbd><span>Play mode: start the song over</span></div></div>
 <div id="hintScrim"></div>
   </div>
@@ -1530,6 +1533,28 @@ function setOrbitWash(v){
 orbitWashBar.addEventListener('input', ()=> setOrbitWash(orbitWashBar.value));
 orbitWashBar.addEventListener('change', ()=>{ savePref('orbitWash', orbitWash); orbitWashBar.blur(); });
 setOrbitWash(loadPrefs().orbitWash ?? ORBIT_SIM_WASH);
+// The picture's own slider (BACKDROP, shown only in the Backdrop): how much
+// of the picture's light is let through, 40..100. It starts a little under
+// full, because the room's light is added on top of the picture all song long.
+// And while a picture is on screen the room's widest lights are held back
+// (bgOn, eased like bgLight): on the dark of the plain Curtains they are the
+// glow of the room, but added to a photo's light parts they took them to white.
+const BG_LEVEL = 85;               // ← where the BACKDROP slider starts (100 = the picture as it was before the slider)
+const BG_FLOOR_TRIM = 0.65;        // taken off the floor's glow (the wide pool of the mood's colour rising from the bottom) over a picture
+const BG_CORDLIGHT_TRIM = 0.4;     // taken off the cords' light on the wall, over a picture
+let bgOn = 0;                      // a picture is on screen, 0..1, eased
+let bgLevel = BG_LEVEL;
+// BACKDROP: the picture's own brightness (see BG_LEVEL). Shown only in the Backdrop, and remembered.
+const bgLevelRow = document.getElementById('bgLevelRow'), bgLevelBar = document.getElementById('bgLevelBar'), bgLevelVal = document.getElementById('bgLevelVal');
+function setBgLevel(v){
+  v = Math.round(+v);
+  bgLevel = Number.isFinite(v) ? Math.max(40, Math.min(100, v)) : BG_LEVEL;
+  bgLevelBar.value = bgLevel;
+  bgLevelVal.textContent = bgLevel;
+}
+bgLevelBar.addEventListener('input', ()=> setBgLevel(bgLevelBar.value));
+bgLevelBar.addEventListener('change', ()=>{ savePref('bgLevel', bgLevel); bgLevelBar.blur(); });
+setBgLevel(loadPrefs().bgLevel ?? BG_LEVEL);
 
 // --- Backdrop: the Curtains with a picture of your own behind them ----------
 // A local picture (a NASA sky, say) sits behind the cords, covering the screen
@@ -1558,8 +1583,8 @@ const BG_OVER = 1.14;              // the bake is this much larger than the scre
 const BG_ZOOM_MIN = 1.06, BG_ZOOM_MAX = 1.12;   // the minimum leaves the bake room for the pan and the parallax together (backdropWindow)
 const BG_ZOOM_S = 70, BG_PAN_X_S = 90, BG_PAN_Y_S = 110;   // seconds per full breath of each movement
 const BG_SRC_MAX = 9e6;            // the kept copy of the picture: at most this many pixels (a NASA original can be 8000 across)
-const BG_SWELL = 0.34;             // how much brighter the picture gets at the top of a swell (a kick you can see)
-const BG_LIFT = 0.24;              // how much fuller the picture gets at the top of a chorus (the Nebula has its own, NEBULA_LIFT)
+const BG_SWELL = 0.22;             // how much brighter the picture gets at the top of a swell (a kick you can see)
+const BG_LIFT = 0.15;              // how much fuller the picture gets at the top of a chorus (the Nebula has its own, NEBULA_LIFT)
 const BG_SWELL_UP = 0.06, BG_SWELL_DOWN = 0.5;   // seconds up, and seconds for the fall back
 const BG_KEEP = 8;                 // pictures kept in the database
 // The dreamy haze: a picture that has to be blown up a lot to fill the screen
@@ -1807,14 +1832,24 @@ function paintLyricPool(alpha, room){
 // A kick's swell and a chorus's lift add some of the picture on top
 // ('lighter', in one draw — the picture added to itself gets brighter in its
 // own colours, never whiter): with the wipe pulling back each frame that
-// settles at exactly +BG_SWELL and +BG_LIFT of it, never more.
+// settles at exactly +BG_SWELL and +BG_LIFT of it, never more (less with the
+// BACKDROP slider down: the lift is the picture's, so it dims with it).
 function paintBackdrop(alpha){
   const bk = backdropBake();
   if(!bk) return false;
   const [sx, sy, sw, sh] = backdropWindow(bk, performance.now());
+  const lvl = bgLevel/100;
   ctx.globalAlpha = alpha;
-  ctx.drawImage(bk, sx, sy, sw, sh, 0, 0, viewW, viewH);
-  const add = backdrop.swell*BG_SWELL + backdrop.lift*BG_LIFT;
+  if(lvl < 0.995){
+    // The BACKDROP slider: the wipe is black at its own alpha, and the picture
+    // is added back at that alpha times the slider. That settles at exactly
+    // the slider's share of the picture, and the cords' trails fade as before.
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, viewW, viewH);
+    ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = alpha*lvl;
+    ctx.drawImage(bk, sx, sy, sw, sh, 0, 0, viewW, viewH);
+    ctx.globalCompositeOperation = 'source-over';
+  } else ctx.drawImage(bk, sx, sy, sw, sh, 0, 0, viewW, viewH);
+  const add = (backdrop.swell*BG_SWELL + backdrop.lift*BG_LIFT)*lvl;
   if(add > 0.01){
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = alpha*add;
@@ -1841,6 +1876,7 @@ function backdropStep(dt){
   const want = backdropOnScreen() ? backdrop.leanTarget : 0;
   backdropLean += (want - backdropLean)*Math.min(1, dt/1.5);
   bgLight += ((backdropOnScreen() ? backdrop.lightness : 0) - bgLight)*Math.min(1, dt/1.0);
+  bgOn += ((backdropOnScreen() ? 1 : 0) - bgOn)*Math.min(1, dt/1.0);
   parallaxStep(dt);
   const brightWords = bgLight > 0.35;   // the words' heavier halo (see #lyrics.bright-bg)
   if(brightWords !== lyricsEl.classList.contains('bright-bg')) lyricsEl.classList.toggle('bright-bg', brightWords);
@@ -1962,6 +1998,7 @@ function syncBackdropUI(){
   roomRow.hidden = !isCurtains(currentShape);
   fxRow.hidden = roomRow.hidden;   // the mood effects ride with the water switch
   orbitRow.hidden = currentShape !== 'Orbit';   // Music Orbit's DIM slider
+  bgLevelRow.hidden = !(has && currentShape === 'Backdrop');   // the picture's own BACKDROP slider
   bgPick.classList.toggle('loaded', own);
   bgLabel.textContent = has ? '🖼 ' + backdrop.name : currentShape === 'Backdrop' ? '🖼 Choose a picture' : '🖼 Background image';
   bgPick.title = own ? backdrop.name + (backdrop.wings ? ' — shown whole on this wide screen, between soft wings' : '') + (backdrop.haze > 0.01 ? ' — small for this screen, shown as a soft haze' : backdrop.small ? ' — smaller than the screen, so it looks a little soft' : '') + ' — choose another (the Backdrop shows it)'
@@ -3036,7 +3073,7 @@ function paintCordLight(alpha){
   paintSoft('cordlight', 'lighter', ()=>{
     ctx.globalCompositeOperation = 'lighter';
     for(let i = 0; i < cordTipN; i += 6){
-      const a = cordTips[i+5]*CORD_LIGHT*(1 - bgLight*0.45)*alpha;
+      const a = cordTips[i+5]*CORD_LIGHT*(1 - bgLight*0.45)*(1 - bgOn*BG_CORDLIGHT_TRIM)*alpha;
       if(a < 0.004) continue;
       ctx.globalAlpha = Math.min(0.7, a);
       ctx.drawImage(cordLightFor(cordTips[i+2]|0, cordTips[i+3]|0, cordTips[i+4]|0), cordTips[i] - r, cordTips[i+1] - r, r*2, r*2);
@@ -10600,7 +10637,7 @@ function drawCurtainsIntelligent(now, bassLvl, voiceLvl, trebLvl){
   // does something to the room it arrives in, and a run of them during a
   // chorus lifts the whole floor rather than each drop flashing on its own.
   const glowA = Math.min(0.45, 0.06 + moodEnergy*0.5 + chorusness*0.2
-                               + curtainFloorPulse*0.14);
+                               + curtainFloorPulse*0.14)*(1 - bgOn*BG_FLOOR_TRIM);   // held back over a picture (see BG_FLOOR_TRIM); the plain Curtains get all of it
   // Where the sound's weight sits, left to right: the three regions' centres
   // weighed by their settled levels. A bass-heavy track puts the warmth under
   // the bass end, where the drops are landing anyway; a bright one walks it
