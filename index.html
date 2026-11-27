@@ -1105,7 +1105,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
     }
     var k = 1 - Math.exp(-dt * 16);
     yaw += (tYaw - yaw) * k; pit += (tPit - pit) * k;
-    if (!drag && !vYaw && !vPit && Math.abs(tYaw - yaw) < 0.01 && Math.abs(tPit - pit) < 0.01) { yaw = tYaw; pit = tPit < 0.01 ? (tPit = rawPit = 0) : tPit; }
+    if (!vYaw && !vPit && Math.abs(tYaw - yaw) < 0.01 && Math.abs(tPit - pit) < 0.01) { yaw = tYaw; pit = tPit < 0.01 ? (tPit = rawPit = 0) : tPit; }
     draw(t);
     if (moving()) kick();
   }
