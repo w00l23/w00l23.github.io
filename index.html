@@ -259,7 +259,7 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .card, .btn, .card .thumb img, .card h3 .arrow, .thread .tstar { transition: none; }
-    .phone { transform: none; }
+    .phone { transform: translateY(0); }
     .card .live, .card .tap-open { display: none; }
     .card.is-loading .thumb::after { animation: none; display: none; }
   }
@@ -533,11 +533,15 @@
   var lite = !!(navigator.connection && navigator.connection.saveData);
   var live = null, wait = 0, cap = 0;
   function can() { return !still.matches && !lite; }
+  // for a screen reader: the first tap did something, and what the second will do
+  var say = document.createElement('span'); say.setAttribute('aria-live', 'polite');
+  say.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap';
+  document.body.appendChild(say);
   function stop() {
     clearTimeout(wait); clearTimeout(cap);
     var c = live; if (!c) return;
     live = null;
-    c.classList.remove('is-live', 'is-loading', 'is-armed');
+    c.classList.remove('is-live', 'is-loading', 'is-armed'); say.textContent = '';
     setTimeout(function () { if (live !== c) c._live.textContent = ''; }, 520);   // after the fade back to the still
   }
   function start(c, armed) {
@@ -545,7 +549,7 @@
     if (live !== c) {
       stop(); live = c;
       var f = c._live.firstChild;
-      if (f) c.classList.add('is-live');
+      if (f) c.classList.add(f._ok ? 'is-live' : 'is-loading');
       else {
         f = document.createElement('iframe');
         f.setAttribute('aria-hidden', 'true'); f.setAttribute('tabindex', '-1'); f.setAttribute('scrolling', 'no'); f.title = '';
@@ -553,25 +557,25 @@
         f.setAttribute('sandbox', 'allow-scripts allow-same-origin');
         f.setAttribute('allow', "autoplay 'none'; geolocation 'none'; microphone 'none'; camera 'none'; fullscreen 'none'");
         f.addEventListener('load', function () {
-          setTimeout(function () { if (live === c && f.parentNode) { c.classList.remove('is-loading'); c.classList.add('is-live'); } }, 600);
+          setTimeout(function () { f._ok = true; if (live === c && f.parentNode) { c.classList.remove('is-loading'); c.classList.add('is-live'); } }, 600);
         });
         c.classList.add('is-loading');
         f.src = c.getAttribute('data-preview');
         c._live.appendChild(f);
       }
     }
-    if (armed) { c.classList.add('is-armed'); clearTimeout(cap); cap = setTimeout(stop, 45000); }
+    if (armed) { c.classList.add('is-armed'); say.textContent = 'Preview playing. Tap again to open.'; clearTimeout(cap); cap = setTimeout(stop, 45000); }
   }
   cards.forEach(function (c) {
     var thumb = c.querySelector('.thumb'), touched = 0;
-    c._live = document.createElement('span'); c._live.className = 'live'; c._live.setAttribute('aria-hidden', 'true');
+    c._live = document.createElement('span'); c._live.className = 'live'; c._live.setAttribute('aria-hidden', 'true'); c._live.setAttribute('inert', '');
     var hint = document.createElement('span'); hint.className = 'tap-open'; hint.setAttribute('aria-hidden', 'true'); hint.textContent = 'Tap again to open ↗';
     thumb.appendChild(c._live); thumb.appendChild(hint);
     c.addEventListener('pointerenter', function (e) {
       if (e.pointerType !== 'mouse') return;
       clearTimeout(wait); wait = setTimeout(function () { start(c); }, 220);     // a pause, so a pointer only passing over loads nothing
     });
-    c.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && !c.classList.contains('is-armed')) { clearTimeout(wait); if (live === c) stop(); } });
+    c.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && !c.classList.contains('is-armed')) { clearTimeout(wait); if (live === c && !c.matches(':focus-visible')) stop(); } });
     c.addEventListener('focus', function () { if (c.matches(':focus-visible')) start(c); });
     c.addEventListener('blur', function () { if (live === c && !c.matches(':hover')) stop(); });
     c.addEventListener('pointerdown', function (e) { touched = e.pointerType === 'mouse' ? 0 : e.timeStamp; });
@@ -977,7 +981,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
       if (salt[i] < -0.5) continue;
       proj(saz[i], salt[i]);
       x = PX; if (x < -4 || x > W + 4) continue;
-      y = PY; if (y < -4 || y > yh + 3) continue;
+      y = PY; if (y < -4 || (pit && y > yh + 12)) continue;
       // by day a star shows only where the sky is still dark, high above the words
       var dim = starDim;
       if (day > 0.02) { var up = Math.max(0, Math.min(1, (yt2 - y) / (yt2 * 0.85))); dim = starDim + day * up * up * 0.9; if (dim < 0.04) continue; }
@@ -988,7 +992,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
         if (m < 1.2) { ctx.globalAlpha = 0.14 * dim; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
         ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
       }
-      if (m < 4.6) drawn.push([x, y, nameOf[i] || ('a star, magnitude ' + m.toFixed(1)), nameOf[i] ? 'named' : 'star', m, 0, COL[scol[i]]]);
+      if (m < 4.6) drawn.push([x, y, nameOf[i] || ('a star, magnitude ' + m.toFixed(1)), nameOf[i] ? 'named' : 'star', m, i, COL[scol[i]]]);
     }
     // the figures: faint lines between the stars of the constellations
     if (starDim > 0.03) {
@@ -1008,7 +1012,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
       var b = bodies[i];
       if (b.alt < -1) continue;
       proj(b.az, b.alt); x = PX; y = PY;
-      if (x < -20 || x > W + 20 || y > yh + b.r) continue;
+      if (x < -20 || x > W + 20 || (pit && y > yh + b.r * (b.kind === 'sun' ? 14 : 3))) continue;
       if (b.kind === 'sun') {
         if (b.alt < -6) continue;
         var sg = ctx.createRadialGradient(x, y, b.r, x, y, b.r * 14);
@@ -1075,7 +1079,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
   // the tapped name follows its star while the sky turns; false once the star is out of view
   function followPicked() {
     if (!picked) return false;
-    for (var i = 0; i < drawn.length; i++) if (drawn[i][2] === picked[2]) { picked[0] = drawn[i][0]; picked[1] = drawn[i][1]; return true; }
+    for (var i = 0; i < drawn.length; i++) if (drawn[i][5] === picked[5] && drawn[i][2] === picked[2]) { picked[0] = drawn[i][0]; picked[1] = drawn[i][1]; return true; }   // [5] is the star's own number: many faint stars share a label
     return false;
   }
 
@@ -1089,7 +1093,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
   function soft(v, lim) { return lim * Math.tanh(v / lim); }
   function unsoft(v, lim) { var u = Math.max(-0.995, Math.min(0.995, v / lim)); return lim * 0.5 * Math.log((1 + u) / (1 - u)); }
   function setTargets() { if (rawPit < 0) { rawPit = 0; if (vPit < 0) vPit = 0; } tYaw = soft(rawYaw, YAW); tPit = soft(rawPit, PIT); }
-  function moving() { return !!drag || vYaw !== 0 || vPit !== 0 || yaw !== tYaw || pit !== tPit; }
+  function moving() { return vYaw !== 0 || vPit !== 0 || yaw !== tYaw || pit !== tPit; }
   function frame(t) {
     raf = 0;
     var dt = Math.min(0.05, Math.max(0.001, (t - lastT) / 1000)); lastT = t;
@@ -1119,6 +1123,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
   });
   hero.addEventListener('pointermove', function (e) {
     if (!drag || e.pointerId !== drag.id) return;
+    if (drag.mouse && !(e.buttons & 1)) { endDrag(e); return; }             // the button came up somewhere this page never heard of
     var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (!drag.on) {
       if (Math.hypot(dx, dy) < 6) return;
@@ -1127,6 +1132,7 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
     }
     // the sky follows the hand: pulled right, the view turns left; pulled down, it tips up
     rawYaw = drag.yaw - dx / sh; rawPit = drag.pit + dy / sv;
+    if (rawPit < 0) { drag.y = e.clientY + drag.pit * sv; rawPit = 0; }     // pushed up at the limit: pulling back down answers at once
     var dtm = (e.timeStamp - drag.lt) / 1000;
     if (dtm > 0.008) {
       drag.vx = drag.vx * 0.5 - (e.clientX - drag.lx) / sh / dtm * 0.5; drag.vy = drag.vy * 0.5 + (e.clientY - drag.ly) / sv / dtm * 0.5;
@@ -1138,8 +1144,9 @@ const STAR_LINES = [[9,25],[25,67],[67,28],[28,631],[631,56],[56,6],[6,67],[9,63
     if (!drag || e.pointerId !== drag.id) return;
     var d = drag; drag = null; hero.classList.remove('dragging');
     if (!d.on) return;
-    // let go while still moving, it glides on a little; held still first, or taken over by the page's scroll, it stays put
+    // let go while still moving, it glides on a little; held still first, it stays put
     if (e.type === 'pointerup' && e.timeStamp - d.lt < 90) { vYaw = Math.max(-60, Math.min(60, d.vx)); vPit = Math.max(-20, Math.min(20, d.vy)); }
+    else if (e.type === 'pointercancel') { rawYaw = d.yaw; rawPit = d.pit; setTargets(); }   // the page scrolled instead: put the sky back where the finger found it
     kick();
   }
   hero.addEventListener('pointerup', function (e) {
